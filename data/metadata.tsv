@@ -1,0 +1,217 @@
+sample	treatment	replicate	day	description
+HAMBI2	H	2	0	no predator
+HAMBI3	H	3	0	no predator
+HAMBI4	H	4	0	no predator
+HAMBI5	H	5	0	no predator
+HAMBI2	HN	2	0	C elegans
+HAMBI3	HN	3	0	C elegans
+HAMBI4	HN	4	0	C elegans
+HAMBI5	HN	5	0	C elegans
+HAMBI2	HNPanc	2	0	C elegans + T thermo
+HAMBI3	HNPanc	3	0	C elegans + T thermo
+HAMBI4	HNPanc	4	0	C elegans + T thermo
+HAMBI5	HNPanc	5	0	C elegans + T thermo
+HAMBI2	HNPevo	2	0	C elegans + evo T thermo
+HAMBI3	HNPevo	3	0	C elegans + evo T thermo
+HAMBI4	HNPevo	4	0	C elegans + evo T thermo
+HAMBI5	HNPevo	5	0	C elegans + evo T thermo
+HAMBI2	HPanc	2	0	T thermo
+HAMBI3	HPanc	3	0	T thermo
+HAMBI4	HPanc	4	0	T thermo
+HAMBI5	HPanc	5	0	T thermo
+HAMBI2	HPevo	2	0	evo T thermo
+HAMBI3	HPevo	3	0	evo T thermo
+HAMBI4	HPevo	4	0	evo T thermo
+HAMBI5	HPevo	5	0	evo T thermo
+H2-d5	H	2	5	no predator
+H3-d5	H	3	5	no predator
+H4-d5	H	4	5	no predator
+H5-d5	H	5	5	no predator
+HN2-d5	HN	2	5	C elegans
+HN3-d5	HN	3	5	C elegans
+HN4-d5	HN	4	5	C elegans
+HN5-d5	HN	5	5	C elegans
+HNPanc2-d5	HNPanc	2	5	C elegans + T thermo
+HNPanc3-d5	HNPanc	3	5	C elegans + T thermo
+HNPanc4-d5	HNPanc	4	5	C elegans + T thermo
+HNPanc5-d5	HNPanc	5	5	C elegans + T thermo
+HNPevo2-d5	HNPevo	2	5	C elegans + evo T thermo
+HNPevo3-d5	HNPevo	3	5	C elegans + evo T thermo
+HNPevo4-d5	HNPevo	4	5	C elegans + evo T thermo
+HNPevo5-d5	HNPevo	5	5	C elegans + evo T thermo
+HPanc2-d5	HPanc	2	5	T thermo
+HPanc3-d5	HPanc	3	5	T thermo
+HPanc4-d5	HPanc	4	5	T thermo
+HPanc5-d5	HPanc	5	5	T thermo
+HPevo2-d5	HPevo	2	5	evo T thermo
+HPevo3-d5	HPevo	3	5	evo T thermo
+HPevo4-d5	HPevo	4	5	evo T thermo
+HPevo5-d5	HPevo	5	5	evo T thermo
+H2-d9	H	2	9	no predator
+H3-d9	H	3	9	no predator
+H4-d9	H	4	9	no predator
+H5-d9	H	5	9	no predator
+HN2-d9	HN	2	9	C elegans
+HN3-d9	HN	3	9	C elegans
+HN4-d9	HN	4	9	C elegans
+HN5-d9	HN	5	9	C elegans
+HNPanc2-d9	HNPanc	2	9	C elegans + T thermo
+HNPanc3-d9	HNPanc	3	9	C elegans + T thermo
+HNPanc4-d9	HNPanc	4	9	C elegans + T thermo
+HNPanc5-d9	HNPanc	5	9	C elegans + T thermo
+HNPevo2-d9	HNPevo	2	9	C elegans + evo T thermo
+HNPevo3-d9	HNPevo	3	9	C elegans + evo T thermo
+HNPevo4-d9	HNPevo	4	9	C elegans + evo T thermo
+HNPevo5-d9	HNPevo	5	9	C elegans + evo T thermo
+HPanc2-d9	HPanc	2	9	T thermo
+HPanc3-d9	HPanc	3	9	T thermo
+HPanc4-d9	HPanc	4	9	T thermo
+HPanc5-d9	HPanc	5	9	T thermo
+HPevo2-d9	HPevo	2	9	evo T thermo
+HPevo3-d9	HPevo	3	9	evo T thermo
+HPevo4-d9	HPevo	4	9	evo T thermo
+HPevo5-d9	HPevo	5	9	evo T thermo
+H2-d13	H	2	13	no predator
+H3-d13	H	3	13	no predator
+H4-d13	H	4	13	no predator
+H5-d13	H	5	13	no predator
+HN2-d13	HN	2	13	C elegans
+HN3-d13	HN	3	13	C elegans
+HN4-d13	HN	4	13	C elegans
+HN5-d13	HN	5	13	C elegans
+HNPanc2-d13	HNPanc	2	13	C elegans + T thermo
+HNPanc3-d13	HNPanc	3	13	C elegans + T thermo
+HNPanc4-d13	HNPanc	4	13	C elegans + T thermo
+HNPanc5-d13	HNPanc	5	13	C elegans + T thermo
+HNPevo2-d13	HNPevo	2	13	C elegans + evo T thermo
+HNPevo3-d13	HNPevo	3	13	C elegans + evo T thermo
+HNPevo4-d13	HNPevo	4	13	C elegans + evo T thermo
+HNPevo5-d13	HNPevo	5	13	C elegans + evo T thermo
+HPanc2-d13	HPanc	2	13	T thermo
+HPanc3-d13	HPanc	3	13	T thermo
+HPanc4-d13	HPanc	4	13	T thermo
+HPanc5-d13	HPanc	5	13	T thermo
+HPevo2-d13	HPevo	2	13	evo T thermo
+HPevo3-d13	HPevo	3	13	evo T thermo
+HPevo4-d13	HPevo	4	13	evo T thermo
+HPevo5-d13	HPevo	5	13	evo T thermo
+H2-d17	H	2	17	no predator
+H3-d17	H	3	17	no predator
+H4-d17	H	4	17	no predator
+H5-d17	H	5	17	no predator
+HN2-d17	HN	2	17	C elegans
+HN3-d17	HN	3	17	C elegans
+HN4-d17	HN	4	17	C elegans
+HN5-d17	HN	5	17	C elegans
+HNPanc2-d17	HNPanc	2	17	C elegans + T thermo
+HNPanc3-d17	HNPanc	3	17	C elegans + T thermo
+HNPanc4-d17	HNPanc	4	17	C elegans + T thermo
+HNPanc5-d17	HNPanc	5	17	C elegans + T thermo
+HNPevo2-d17	HNPevo	2	17	C elegans + evo T thermo
+HNPevo3-d17	HNPevo	3	17	C elegans + evo T thermo
+HNPevo4-d17	HNPevo	4	17	C elegans + evo T thermo
+HNPevo5-d17	HNPevo	5	17	C elegans + evo T thermo
+HPanc2-d17	HPanc	2	17	T thermo
+HPanc3-d17	HPanc	3	17	T thermo
+HPanc4-d17	HPanc	4	17	T thermo
+HPanc5-d17	HPanc	5	17	T thermo
+HPevo2-d17	HPevo	2	17	evo T thermo
+HPevo3-d17	HPevo	3	17	evo T thermo
+HPevo4-d17	HPevo	4	17	evo T thermo
+HPevo5-d17	HPevo	5	17	evo T thermo
+H2-d21	H	2	21	no predator
+H3-d21	H	3	21	no predator
+H4-d21	H	4	21	no predator
+H5-d21	H	5	21	no predator
+HN2-d21	HN	2	21	C elegans
+HN3-d21	HN	3	21	C elegans
+HN4-d21	HN	4	21	C elegans
+HN5-d21	HN	5	21	C elegans
+HNPanc2-d21	HNPanc	2	21	C elegans + T thermo
+HNPanc3-d21	HNPanc	3	21	C elegans + T thermo
+HNPanc4-d21	HNPanc	4	21	C elegans + T thermo
+HNPanc5-d21	HNPanc	5	21	C elegans + T thermo
+HNPevo2-d21	HNPevo	2	21	C elegans + evo T thermo
+HNPevo3-d21	HNPevo	3	21	C elegans + evo T thermo
+HNPevo4-d21	HNPevo	4	21	C elegans + evo T thermo
+HNPevo5-d21	HNPevo	5	21	C elegans + evo T thermo
+HPanc2-d21	HPanc	2	21	T thermo
+HPanc3-d21	HPanc	3	21	T thermo
+HPanc4-d21	HPanc	4	21	T thermo
+HPanc5-d21	HPanc	5	21	T thermo
+HPevo2-d21	HPevo	2	21	evo T thermo
+HPevo3-d21	HPevo	3	21	evo T thermo
+HPevo4-d21	HPevo	4	21	evo T thermo
+HPevo5-d21	HPevo	5	21	evo T thermo
+H2-d29	H	2	29	no predator
+H3-d29	H	3	29	no predator
+H4-d29	H	4	29	no predator
+H5-d29	H	5	29	no predator
+HN2-d29	HN	2	29	C elegans
+HN3-d29	HN	3	29	C elegans
+HN4-d29	HN	4	29	C elegans
+HN5-d29	HN	5	29	C elegans
+HNPanc2-d29	HNPanc	2	29	C elegans + T thermo
+HNPanc3-d29	HNPanc	3	29	C elegans + T thermo
+HNPanc4-d29	HNPanc	4	29	C elegans + T thermo
+HNPanc5-d29	HNPanc	5	29	C elegans + T thermo
+HNPevo2-d29	HNPevo	2	29	C elegans + evo T thermo
+HNPevo3-d29	HNPevo	3	29	C elegans + evo T thermo
+HNPevo4-d29	HNPevo	4	29	C elegans + evo T thermo
+HNPevo5-d29	HNPevo	5	29	C elegans + evo T thermo
+HPanc2-d29	HPanc	2	29	T thermo
+HPanc3-d29	HPanc	3	29	T thermo
+HPanc4-d29	HPanc	4	29	T thermo
+HPanc5-d29	HPanc	5	29	T thermo
+HPevo2-d29	HPevo	2	29	evo T thermo
+HPevo3-d29	HPevo	3	29	evo T thermo
+HPevo4-d29	HPevo	4	29	evo T thermo
+HPevo5-d29	HPevo	5	29	evo T thermo
+H2-d45	H	2	45	no predator
+H3-d45	H	3	45	no predator
+H4-d45	H	4	45	no predator
+H5-d45	H	5	45	no predator
+HN2-d45	HN	2	45	C elegans
+HN3-d45	HN	3	45	C elegans
+HN4-d45	HN	4	45	C elegans
+HN5-d45	HN	5	45	C elegans
+HNPanc2-d45	HNPanc	2	45	C elegans + T thermo
+HNPanc3-d45	HNPanc	3	45	C elegans + T thermo
+HNPanc4-d45	HNPanc	4	45	C elegans + T thermo
+HNPanc5-d45	HNPanc	5	45	C elegans + T thermo
+HNPevo2-d45	HNPevo	2	45	C elegans + evo T thermo
+HNPevo3-d45	HNPevo	3	45	C elegans + evo T thermo
+HNPevo4-d45	HNPevo	4	45	C elegans + evo T thermo
+HNPevo5-d45	HNPevo	5	45	C elegans + evo T thermo
+HPanc2-d45	HPanc	2	45	T thermo
+HPanc3-d45	HPanc	3	45	T thermo
+HPanc4-d45	HPanc	4	45	T thermo
+HPanc5-d45	HPanc	5	45	T thermo
+HPevo2-d45	HPevo	2	45	evo T thermo
+HPevo3-d45	HPevo	3	45	evo T thermo
+HPevo4-d45	HPevo	4	45	evo T thermo
+HPevo5-d45	HPevo	5	45	evo T thermo
+H2-d61	H	2	61	no predator
+H3-d61	H	3	61	no predator
+H4-d61	H	4	61	no predator
+H5-d61	H	5	61	no predator
+HN2-d61	HN	2	61	C elegans
+HN3-d61	HN	3	61	C elegans
+HN4-d61	HN	4	61	C elegans
+HN5-d61	HN	5	61	C elegans
+HNPanc2-d61	HNPanc	2	61	C elegans + T thermo
+HNPanc3-d61	HNPanc	3	61	C elegans + T thermo
+HNPanc4-d61	HNPanc	4	61	C elegans + T thermo
+HNPanc5-d61	HNPanc	5	61	C elegans + T thermo
+HNPevo2-d61	HNPevo	2	61	C elegans + evo T thermo
+HNPevo3-d61	HNPevo	3	61	C elegans + evo T thermo
+HNPevo4-d61	HNPevo	4	61	C elegans + evo T thermo
+HNPevo5-d61	HNPevo	5	61	C elegans + evo T thermo
+HPanc2-d61	HPanc	2	61	T thermo
+HPanc3-d61	HPanc	3	61	T thermo
+HPanc4-d61	HPanc	4	61	T thermo
+HPanc5-d61	HPanc	5	61	T thermo
+HPevo2-d61	HPevo	2	61	evo T thermo
+HPevo3-d61	HPevo	3	61	evo T thermo
+HPevo4-d61	HPevo	4	61	evo T thermo
+HPevo5-d61	HPevo	5	61	evo T thermo
