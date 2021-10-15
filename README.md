@@ -66,5 +66,3 @@ Note you must untar `rawData/16SAmplicon/mapping.tar.gz` first, then `rawData/16
 4. [`Fig2.R`](R/Fig2.R) -- Reproduces Fig. 2 from the Main text
 
 ## 3. Prey community composition
-
-oopy doopy
