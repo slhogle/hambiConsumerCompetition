@@ -5,7 +5,7 @@
 
 [Preprint available from bioRxiv](https://www.biorxiv.org/content/10.1101/2021.06.09.447767v1)
 
-[Full text available form Ecology Letters]()
+[Full text available from Ecology Letters]()
 
 Data and code here is provided under the MIT License.
 
@@ -13,7 +13,7 @@ Data and code here is provided under the MIT License.
 
 1. `/sh` contains scripts from running analysis on the [puhti compute cluster](https://docs.csc.fi/computing/systems-puhti/)
 2. `/R` contains R scripts
-3. `dataRaw` contains unprocessed data scraped from puhti
+3. `/dataRaw` contains unprocessed data scraped from puhti
 4. `/data` contains data that has been processed in some way for later use
 5. `/figs` contains figures generated from R scripts
 6. `/tables` contains summary tables generated from R scripts
@@ -46,15 +46,24 @@ done
 ## Quality control and mapping
 Run these steps on an HPC cluster
 
-1. [`ampliconQualityControl.sh`](sh/ampliconQualityControl.sh) - Trim and filter reads
-2. [`ampliconMapping.sh`](sh/ampliconMapping.sh) - map QC'ed reads to the database in 
+1. [`ampliconQualityControl.sh`](sh/ampliconQualityControl.sh) -- Trim and filter reads
+2. [`ampliconMapping.sh`](sh/ampliconMapping.sh) -- map QC'ed reads to the database in 
 
 # Analysis steps
 Go through these steps in order to reproduce the analysis in the paper. 
 
-## Process amplicon
+Note you must untar `rawData/16SAmplicon/mapping.tar.gz` first, 
+then `rawData/16SAmplicon/mapping/bbmapRPKM.tar.gz`
+
+## 1. Process amplicon
 1. [`rpkm2tab.R`](R/rpkm2tab.R) -- format bbmap output to tables
 2. [`correctBias.R`](R/correctBias.R) -- applying method from [this paper](https://elifesciences.org/articles/46923)
 3. [`normalizeCounts.R`](R/normalizeCounts.R) -- normalizing sequencing counts for later 
 
-
+## 2. Model consumer/prey densities
+1. [`ciliateDensityGam.R`](R/ciliateDensityGam.R) -- fit GAM used in Table S2 and Fig 2
+2. [`OD600DensityGam.R`](R/OD600DensityGam.R) -- fit GAM used in Table S3 and Fig 2
+3. [`nematodeDensityGam.R`](R/nematodeDensityGam.R) -- fit GAM used in Table S4 and Fig 2
+4. [`competitiveLV.R`](R/competitiveLV.R) -- parameterize LV competitive model
+4. [`Fig2.R](R/Fig2.R) -- Reproduces Fig. 2 from the Main text
+5. [Fitting density data to Lotka-Volterra]() 
