@@ -16,9 +16,10 @@ with_seed(123784,
             filter(!(treatment %in% c("H", "HN"))) %>%
             select(sample, microcosmID, treatment, replicate, day, ciliate_per_ml) %>%
             distinct() %>%
-            mutate(ciliate_per_ml = ifelse(ciliate_per_ml == 0, rlnorm(100, mean =
-                                                                         5, sd = 0.5), ciliate_per_ml)) %>%
-            mutate(ciliate_per_ml = round(ciliate_per_ml))
+            mutate(ciliate_per_ml_imp = ifelse(ciliate_per_ml == 0, 
+                                               rlnorm(100, mean = 5, sd = 0.5), 
+                                               ciliate_per_ml)) %>%
+            mutate(ciliate_per_ml_imp = round(ciliate_per_ml_imp))
   )
 
 with_seed(123784, 
@@ -27,9 +28,10 @@ with_seed(123784,
             filter(!(treatment %in% c("H", "HPanc", "HPevo"))) %>%
             select(sample, microcosmID, treatment, replicate, day, worm_per_ml) %>%
             distinct() %>%
-            mutate(worm_per_ml = ifelse(worm_per_ml == 0, rlnorm(100, mean = 1, sd =
-                                                                   0.5), worm_per_ml)) %>%
-            mutate(worm_per_ml = round(worm_per_ml))
+            mutate(worm_per_ml_imp = ifelse(worm_per_ml == 0, 
+                                            rlnorm(100, mean = 1, sd = 0.5), 
+                                            worm_per_ml)) %>%
+            mutate(worm_per_ml_imp = round(worm_per_ml_imp))
   )
 
 od_d <- df %>%

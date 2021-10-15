@@ -9,10 +9,12 @@ library(withr)
 library(emmeans)
 
 # Load data ---------------------------------------------------------------
-predator <- read_tsv(here("data", "formattedPredatorPreyDensity.tsv"), col_types="ccccdddd") %>%
+predator <- read_tsv(here("data", "formattedPredatorPreyDensity.tsv"), col_types="ccccdddddd") %>%
   mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
   mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
-         microcosmID=factor(microcosmID))
+         microcosmID=factor(microcosmID)) %>%
+  dplyr::select(-ciliate_per_ml) %>%
+  dplyr::rename(ciliate_per_ml=ciliate_per_ml_imp)
 
 ggplot(input1, aes(x=day, y=ciliate_per_ml, color=treatment, group=microcosmID)) + 
   geom_line() + 
@@ -64,7 +66,7 @@ f3 <- formula(ciliate_per_ml ~ treatment +
 # GAM fits ----------------------------------------------------------------
 
 # Comparing multiple probability distributions
-input <- dplyr::select(predator, -OD, -worm_per_ml) %>%
+input <- dplyr::select(predator, -OD, -worm_per_ml, -worm_per_ml_imp) %>%
   drop_na() %>%
   mutate(treatment=factor(treatment, levels=c("HPanc", "HPevo", "HNPanc", "HNPevo")))
 
@@ -238,12 +240,16 @@ draw(m17)
 appraise(m17)
 
 # Supplementary table S2 --------------------------------------------------
-gamtabs(m17, caption='Summary of m1lnb', type = "latex")
+
+gamtabs(m17, caption='Summary of m1lnb', type = "latex") %>%
+  write_lines(here::here("tables", "tableS2a.tex"))
 
 # emmeans model contrasts
 emmeans(m17, ~ treatment, data=input) %>%
   pairs(type = "response", adjust = "bonf") %>%
-  xtable::xtable(type = "response")
+  xtable::xtable(type = "response") %>%
+  print() %>%
+  write_lines(here::here("tables", "tableS2b.tex"))
 
 # Save model --------------------------------------------------------------
 saveRDS(m17, here::here("data", "ciliateGAM.rds"))

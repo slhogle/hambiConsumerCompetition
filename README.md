@@ -7,18 +7,17 @@
 
 [Full text available from Ecology Letters]()
 
-Data and code here is provided under the MIT License.
+Data and code is provided under the MIT License.
 
 # Directory structure
 
 1. `/sh` contains scripts from running analysis on the [puhti compute cluster](https://docs.csc.fi/computing/systems-puhti/)
 2. `/R` contains R scripts
-3. `/dataRaw` contains unprocessed data scraped from puhti
-4. `/data` contains data that has been processed in some way for later use
+3. `/dataRaw` contains unprocessed data
+4. `/data` contains data that has been processed in some way for from `/dataRaw` for downstream use
 5. `/figs` contains figures generated from R scripts
 6. `/tables` contains summary tables generated from R scripts
-7. `/rendered` contains any markdown or HTML that gets rendered in the process
-of running the scipts.
+7. `/rendered` contains any markdown or HTML that gets rendered in the process of running the scripts.
 
 # 16S amplicon processing
 
@@ -52,8 +51,7 @@ Run these steps on an HPC cluster
 # Analysis steps
 Go through these steps in order to reproduce the analysis in the paper. 
 
-Note you must untar `rawData/16SAmplicon/mapping.tar.gz` first, 
-then `rawData/16SAmplicon/mapping/bbmapRPKM.tar.gz`
+Note you must untar `rawData/16SAmplicon/mapping.tar.gz` first, then `rawData/16SAmplicon/mapping/bbmapRPKM.tar.gz`
 
 ## 1. Process amplicon
 1. [`rpkm2tab.R`](R/rpkm2tab.R) -- format bbmap output to tables
@@ -65,5 +63,6 @@ then `rawData/16SAmplicon/mapping/bbmapRPKM.tar.gz`
 2. [`OD600DensityGam.R`](R/OD600DensityGam.R) -- fit GAM used in Table S3 and Fig 2
 3. [`nematodeDensityGam.R`](R/nematodeDensityGam.R) -- fit GAM used in Table S4 and Fig 2
 4. [`competitiveLV.R`](R/competitiveLV.R) -- parameterize LV competitive model
-4. [`Fig2.R](R/Fig2.R) -- Reproduces Fig. 2 from the Main text
-5. [Fitting density data to Lotka-Volterra]() 
+4. [`Fig2.R`](R/Fig2.R) -- Reproduces Fig. 2 from the Main text
+
+## 3. Prey community composition

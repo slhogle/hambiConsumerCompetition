@@ -27,18 +27,27 @@ tax <- tibble::tribble(
 )
 
 # ggplot theme
-mytheme = function() {
-  theme(
-    panel.grid = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.line.x = element_line(color = "black"),
-    axis.line.y = element_line(color = "black"),
-    legend.title = element_blank(),
-    legend.background = element_blank(),
-    legend.key = element_blank()
-  )
-}
+my_colors <- carto_pal(6, "Vivid")
+names(my_colors) <- c("HPanc", "HPevo", "HN", "HNPanc", "HNPevo", "H")
+
+my_theme <- theme_bw() + 
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.position = "none")
+
+
+# mytheme = function() {
+#   theme(
+#     panel.grid = element_blank(),
+#     panel.border = element_blank(),
+#     panel.background = element_blank(),
+#     axis.line.x = element_line(color = "black"),
+#     axis.line.y = element_line(color = "black"),
+#     legend.title = element_blank(),
+#     legend.background = element_blank(),
+#     legend.key = element_blank()
+#   )
+# }
 
 # opposite of %in% fuction
 `%nin%` = Negate(`%in%`)
