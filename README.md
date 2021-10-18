@@ -1,19 +1,16 @@
+# "Effects of phenotypic variation on consumer coexistence and prey community structure"
 
-# Supporting data and code for the paper:
-
-"Effects of phenotypic variation on consumer coexistence and prey community structure"
-
-[Preprint available from bioRxiv](https://www.biorxiv.org/content/10.1101/2021.06.09.447767v1)
+[Preprint available from bioRxiv](https://www.biorxiv.org/content/10.1101/2021.06.09.447767)
 
 [Full text available from Ecology Letters]()
 
-Data and code is provided under the MIT License.
+Supporting data and code is provided under the MIT License.
 
 # Directory structure
 
 1. `/sh` contains scripts from running analysis on the [puhti compute cluster](https://docs.csc.fi/computing/systems-puhti/)
-2. `/R` contains R scripts
-3. `/dataRaw` contains unprocessed data
+2. `/r` contains R scripts
+3. `/data_raw` contains unprocessed data
 4. `/data` contains data that has been processed in some way for from `/dataRaw` for downstream use
 5. `/figs` contains figures generated from R scripts
 6. `/tables` contains summary tables generated from R scripts
@@ -36,7 +33,7 @@ fasterq-dump SRR14323812
 You will need to do this for all the SRA accessions associated with BioProject: [PRJNA725120](https://www.ncbi.nlm.nih.gov/bioproject/725120). For example:
 
 ```{bash}
-cut -f1 data/sraRecords.tsv | while read ID; do
+cut -f1 data/sra_records.tsv | while read ID; do
   prefetch $ID
   fasterq-dump $ID
 done
@@ -45,24 +42,46 @@ done
 ## Quality control and mapping
 Run these steps on an HPC cluster
 
-1. [`ampliconQualityControl.sh`](sh/ampliconQualityControl.sh) -- Trim and filter reads
-2. [`ampliconMapping.sh`](sh/ampliconMapping.sh) -- map QC'ed reads to the database in 
+1. [`amplicon_quality_control.sh`](sh/amplicon_quality_control.sh) -- Trim and filter reads
+2. [`amplicon_mapping.sh`](sh/amplicon_mapping.sh) -- map QC'ed reads to the database in 
 
 # Analysis steps
+
+```
+R version 4.1.1 (2021-08-10)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Pop!_OS 21.04
+```
+
 Go through these steps in order to reproduce the analysis in the paper. 
 
-Note you must untar `rawData/16SAmplicon/mapping.tar.gz` first, then `rawData/16SAmplicon/mapping/bbmapRPKM.tar.gz`
+## 1. Format data
+1. [`rpkm2tab.R`](r/rpkm2tab.R) -- format bbmap output to tables
+2. [`format_raw_data.R`](r/format_raw_data.R) -- format raw density data for downstream use
 
-## 1. Process amplicon
-1. [`rpkm2tab.R`](R/rpkm2tab.R) -- format bbmap output to tables
-2. [`correctBias.R`](R/correctBias.R) -- applying method from [this paper](https://elifesciences.org/articles/46923)
-3. [`normalizeCounts.R`](R/normalizeCounts.R) -- normalizing sequencing counts for later 
+## 2. Process amplicon
+2. [`correct_bias.R`](r/correct_bias.R) -- applying method from [this paper](https://elifesciences.org/articles/46923)
+3. [`normalize_counts.R`](r/normalize_counts.R) -- normalizing sequencing counts for later 
 
-## 2. Model consumer/prey densities
-1. [`ciliateDensityGam.R`](R/ciliateDensityGam.R) -- fit GAM used in Table S2 and Fig 2
-2. [`OD600DensityGam.R`](R/OD600DensityGam.R) -- fit GAM used in Table S3 and Fig 2
-3. [`nematodeDensityGam.R`](R/nematodeDensityGam.R) -- fit GAM used in Table S4 and Fig 2
-4. [`competitiveLV.R`](R/competitiveLV.R) -- parameterize LV competitive model
-4. [`Fig2.R`](R/Fig2.R) -- Reproduces Fig. 2 from the Main text
+## 3. Model consumer/prey densities
+1. [`gam_ciliate_density.R`](r/gam_ciliate_density.R) -- fit GAM used in Table S2 and Fig 2
+2. [`gam_OD600_density.R`](r/gam_OD600_density.R) -- fit GAM used in Table S3 and Fig 2
+3. [`gam_nematode_density.R`](r/gam_nematode_density.R) -- fit GAM used in Table S4 and Fig 2
+4. [`competitive_LV.R`](r/competitive_LV.R) -- parameterize LV competitive model
+5. [`fig2.R`](r/fig2.R) -- Reproduces Fig. 2 from the main text
 
-## 3. Prey community composition
+## 4. Prey community composition
+1. [`figS1a.R`](r/figS1a.R) -- Reproduces Fig. S1A from supplementary
+2. [`community_dissimilarity_plot.R`](r/community_dissimilarity_plot.R) -- Reproduces Fig. S1B from supplementary
+3. [`community_dissimilarity_regression.R`](r/community_dissimilarity_regression.R) -- Reproduces Table S5
+4. [`shannon_diversity.R`](r/shannon_diversity.R) -- Run divnet estimate of Shannon diversity and save result
+5. [`change_point_regression.R`](r/change_point_regression.R) -- Perform multiple change point regression of the shannon diversity estimate. Reproduces Fig. S2 from the main text
+6. []
+
+[`ordination.R`](r/ordination.R) --
+
+## 5. Bacteria traits
+
+## 6. Joint species distribution modeling
+
+## 7. Consumer feeding efficiency

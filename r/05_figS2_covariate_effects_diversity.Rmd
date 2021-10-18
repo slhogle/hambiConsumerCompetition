@@ -1,0 +1,454 @@
+---
+title: "Covariate effects on diversity"
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+    fig_width: 7
+    fig_height: 5
+    dev: svg
+    keep_html: yes
+    html_preview: yes
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(rcartocolor)
+library(patchwork)
+library(performance)
+library(modelbased)
+library(insight)
+library(see)
+library(ggeffects)
+library(emmeans)
+library(rstanarm)
+library(bayestestR)
+```
+
+# LOAD DATA
+```{r}
+predator <- read_tsv(here("data", "predator_density.tsv"), col_types="ccccdddd") %>%
+  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
+         microcosmID=factor(microcosmID))
+
+counts <- read_tsv(here::here("data", "norm_counts.tsv"))
+```
+
+## LOAD DIVNET ESTIMATE
+```{r}
+div.sum <- readRDS(here::here("data", "diversity_summary.rds"))
+```
+
+# FORMAT DATA
+```{r}
+sh1 <- div.sum %>% 
+  filter(day < 17) %>% 
+  filter(inference=="plugin")
+
+sh2 <- div.sum %>% 
+  filter(day > 16) %>% 
+  filter(inference=="plugin")
+```
+
+# FREQUENTIST
+
+## PHASE A DIVERSITY (SORTING)
+
+fit glm for the first non-equilibrium phase. Response variable is bounded `0 -> Inf` so `Gamma` and `inverse.gaussian` seem like good error distribution families to try
+```{r}
+m1 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=gaussian(link='identity'),
+    data=sh1)
+
+m1.1 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=gaussian(link='log'),
+    data=sh1)
+
+m2 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=inverse.gaussian(link = "1/mu^2"),
+    data=sh1)
+
+m3 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=inverse.gaussian(link='identity'),
+    data=sh1)
+
+m4 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=inverse.gaussian(link='inverse'),
+    data=sh1)
+
+m5 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=inverse.gaussian(link='log'),
+    data=sh1)
+
+m6 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=Gamma(link="identity"),
+    data=sh1)
+
+m7 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=Gamma(link="inverse"),
+    data=sh1)
+
+m8 <- glm(formula=estimate~poly(day, df=2)*treatment,
+    family=Gamma(link="log"),
+    data=sh1)
+```
+
+
+### PERFORMANCE
+```{r}
+compare_performance(m1, m1.1)
+compare_performance(m1, m1.1, m2, m3, m4, m5, m6, m7, m8, rank=T)
+```
+So Gaussian is bad (as expected).
+
+Let's check inverse.gaussian only
+```{r}
+compare_performance(m2, m3, m4, m5, rank=T)
+```
+
+seems like inverse.gaussian w/ inverse-quadratic link is best. Has lowest RMSE and highest R2
+
+diagnostics are mostly ok. homogeneity of variance is weird because at day 0 everything starts at the same diversity more or less
+```{r}
+check_model(m2)
+```
+
+Do we need the quadratic term?
+```{r}
+m2_noq <- glm(formula=estimate~day*treatment,
+    family=inverse.gaussian(link = "1/mu^2"),
+    data=sh1)
+```
+
+```{r}
+compare_performance(m2, m2_noq, rank=T)
+```
+
+```{r}
+check_model(m2_noq)
+```
+
+### EMMEANS
+
+Effect of the quadratic term
+```{r}
+sh1.emt.deg <- emtrends(m2_noq, ~ degree | treatment, var = "day", max.degree = 2)
+summary(sh1.emt.deg, infer = c(TRUE, TRUE))
+```
+Quadratic term is important in some cases, but role seems small compared to linear term
+
+Testing for different linear trends (slopes) between conditions
+```{r}
+sh1.emt <- emtrends(m2, specs = pairwise ~ treatment, var = "day", max.degree = 1)
+pairs(sh1.emt, adjust = "bonferroni", type = "response")
+```
+
+### PLOTS
+```{r}
+my_colors <- carto_pal(6, "Vivid")
+
+names(my_colors) <- c("HPanc", "HPevo", "HN", "HNPanc", "HNPevo", "H")
+```
+
+```{r}
+dat <- ggemmeans(m2_noq, terms = c("day [all]", "treatment")) %>%
+  rename(treatment=group, day=x)
+
+dat2 <- sh1 %>% select(estimate, lower, upper, treatment, day) %>% distinct()
+
+dat3 <- left_join(dat, dat2) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HPanc", "HPevo",
+                                              "HN", "HNPanc", "HNPevo")))
+
+p1 <- ggplot(dat3) + 
+  geom_pointrange(aes(x=day, y=estimate, ymin=lower, ymax=upper, 
+                      color=treatment, group=treatment), fatten=2, 
+                  position=position_jitter(width=0.2, height = 0)) +
+  geom_ribbon(aes(x=day, ymin=conf.low, ymax=conf.high,
+                  fill=treatment, group=treatment), alpha=0.15) +
+  geom_line(aes(x=day, y=predicted, color=treatment, group=treatment)) +
+  scale_color_manual(values=my_colors) + 
+  scale_fill_manual(values=my_colors) + 
+  theme_modern()
+
+p1
+```
+
+```{r}
+dat <- ggemmeans(m2, terms = c("day [all]", "treatment")) %>%
+  rename(treatment=group, day=x)
+
+dat2 <- sh1 %>% select(estimate, lower, upper, treatment, day) %>% distinct()
+
+dat3 <- left_join(dat, dat2)
+
+p1 <- ggplot(dat3) + 
+  geom_pointrange(aes(x=day, y=estimate, ymin=lower, ymax=upper, 
+                      color=treatment, group=treatment), fatten=2, 
+                  position=position_jitter(width=0.2, height = 0)) +
+  geom_ribbon(aes(x=day, ymin=conf.low, ymax=conf.high,
+                  fill=treatment, group=treatment), alpha=0.15) +
+  geom_line(aes(x=day, y=predicted, color=treatment, group=treatment)) +
+  scale_color_manual(values=my_colors) + 
+  scale_fill_manual(values=my_colors) + 
+  theme_modern()
+
+p1
+```
+
+## PHASE B DIVERSITY (QUASI-EQUILIBIUM)
+
+fit glm for the second equilibrium phase
+```{r}
+m2B <- glm(formula=estimate~treatment,
+    family=inverse.gaussian(link = "1/mu^2"),
+    data=sh2)
+```
+
+### EMMEANS
+```{r}
+# regrid to put back on orginal scale
+m2B.rg <- ref_grid(m2B)
+m2B.rg.remm.s <- emmeans(regrid(m2B.rg), "treatment")
+
+sh2.emm <- emmeans(regrid(m2B.rg), specs = pairwise ~ treatment, type = "response", adjust = "mvt", data=sh2)
+
+sh2.emm.pairs <- pairs(sh2.emm, adjust = "fdr", type = "response")
+```
+
+```{r}
+sh2.emm.pairs$emmeans
+```
+
+```{r}
+dat <- ggemmeans(m2B, terms = c("treatment")) %>%
+  rename(treatment=x)
+
+dat2 <- sh2 %>% select(estimate, lower, upper, treatment, day) %>% distinct()
+
+dat3 <- left_join(dat, dat2) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HPanc", "HPevo",
+                                              "HN", "HNPanc", "HNPevo")))
+
+p2 <- ggplot(dat3) + 
+  geom_pointrange(aes(x=treatment, y=predicted, ymin=conf.low, ymax=conf.high,
+                      group=treatment)) +
+  geom_pointrange(aes(x=treatment, y=estimate, ymin=lower, ymax=upper, 
+                      color=treatment, group=treatment), 
+                  fatten=1, position=position_jitter(width=0.1, height = 0)) +
+  scale_color_manual(values=my_colors) + 
+  scale_fill_manual(values=my_colors) + 
+  theme_modern()
+
+p2
+```
+
+# BAYESIAN APPROACH
+
+## PHASE A DIVERSITY (SORTING)
+
+```{r}
+m2stan <- stan_glm(estimate~poly(day, df=2)*treatment,
+                  data = sh1,
+                  family=inverse.gaussian(link = "1/mu^2"),
+                  iter = 4000,
+                  cores = 4,
+                  seed = 12345)
+```
+
+### ESTIMATE ROPES
+
+```{r}
+#ALPHA ROPE
+
+
+#SLOPE ROPE
+pairs(emtrends(m2stan, "treatment", var = "day", 
+         max.degree = 1, transform="response")) %>%
+  as.data.frame() %>%
+  summarize(rope=0.1*sd(estimate))
+```
+
+### DESCRIBE MODEL POSTERIOR
+
+```{r}
+describe_posterior(m2stan, test = c("pd", "rope"), ci = 0.95, rope_range = c(-0.1,0.1), rope_ci=1) #%>%
+  as_tibble() %>%
+  mutate(Median=round(Median, 2),
+         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
+         pd=pd*100) %>%
+        mutate(ROPE_Percentage=ROPE_Percentage*100) %>%
+  select(Parameter, Median, CI, pd, ROPE_low, ROPE_Percentage) %>%
+  xtable::xtable()
+```
+### ESTIMATE SLOPES
+```{r}
+library(modelbased)
+estimate_slopes(m2stan, 
+                trend="day", 
+                levels="treatment", 
+                test=c("p_direction", "rope"), 
+                ci = 0.95,
+                rope_range = c(-0.002962179, 0.002962179),
+                rope_ci = 1,
+                standardize_robust=T) %>%
+  as_tibble() %>%
+  mutate(Median=round(Median, 2),
+         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
+         pd=pd*100) %>%
+  mutate(ROPE_low=0.002962179,
+         ROPE_Percentage=ROPE_Percentage*100) %>%
+  select(treatment, Median, CI, pd, ROPE_low, ROPE_Percentage) %>%
+  xtable::xtable()
+```
+
+### CONTRASTS OF SLOPES
+```{r}
+describe_posterior(pairs(emtrends(m2stan, 
+                                  "treatment", 
+                                   var = "day",
+                                  max.degree = 1,
+                                  data=sh1,
+                                  transform="response")),
+                            ci = 0.95,
+                            rope_range = c(-0.002962179, 0.002962179),
+                            rope_ci = 1,
+                            test = c("p_direction", "rope")) %>%
+  as_tibble() %>%
+  mutate(Median=round(Median, 2),
+         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
+         pd=pd*100) %>%
+  mutate(ROPE_low=0.002962179,
+         ROPE_Percentage=ROPE_Percentage*100) %>%
+  select(Parameter, Median, CI, pd, ROPE_low, ROPE_Percentage) %>%
+  xtable::xtable()
+```
+
+
+### PLOT MODEL PREDICTIONS
+```{r}
+estim <- estimate_relation(m2stan, modulate = "day", ci = 0.95, length=100)
+
+p1 <- ggplot(estim, aes(x = day, y = Predicted)) +
+  geom_ribbon(aes(group=treatment, fill = treatment, ymin = CI_low, ymax = CI_high), alpha = 0.1) +
+  geom_line(aes(group=treatment, color = treatment)) +
+  geom_jitter(data = sh1, aes(y = estimate, color=treatment), width = 0.2, height = 0.1) +
+  ylab("Shannon Diversity") +
+  scale_color_manual(values=my_colors) + 
+  scale_fill_manual(values=my_colors) + 
+  theme_modern()
+
+p1
+```
+
+### CONTRASTS
+```{r}
+constrasts <- estimate_contrasts(m2stan, 
+                                 modulate = "day", 
+                                 length = 100, 
+                                 transform="response")
+
+constrasts$Contrast <- paste0(constrasts$Level1, "-", constrasts$Level2)
+
+# Visualise the changes in the differences
+p2 <- constrasts %>%
+  filter(pd >= 0.97) %>%
+  ggplot(aes(x = day, y = Difference)) +
+  geom_ribbon(aes(fill = Contrast, ymin = CI_low, ymax = CI_high), alpha = 0.1) +
+  geom_line(aes(colour = Contrast), size=0.5) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  scale_color_carto_d(palette="Vivid") + 
+  scale_fill_carto_d(palette="Vivid") + 
+  ylab("Difference") +
+  theme_modern()
+
+p2
+```
+
+### SLOPE DIFERENCES
+
+Can use estimate_slopes from `modelbased` package
+```{r}
+estimate_slopes(m2stan, trend="day", levels="treatment", test="pd", standardize_robust=T) 
+```
+
+This is uses emmeans under the hood
+```{r}
+pairs(emtrends(m2stan, "treatment", var = "day", 
+         max.degree = 1, transform="response")) %>%
+  as.data.frame() %>%
+  summarize(rope=0.1*sd(estimate))
+
+describe_posterior(pairs(emtrends(m2stan, 
+                                  "treatment", 
+                                   var = "day",
+                                  max.degree = 1,
+                                  data=sh1,
+                                  transform="response")),
+                            ci = 0.95,
+                            rope_range = c(-0.002962179, 0.002962179),
+                            rope_ci = 1,
+                            test = c("p_direction", "rope"))# %>%
+  #xtable::xtable()
+```
+
+
+## PHASE B DIVERSITY (QUASI-EQUILIBRIUM)
+
+```{r}
+m2Bstan <- stan_glm(estimate~treatment,
+                  data = sh2,
+                  family=inverse.gaussian(link = "1/mu^2"),
+                  iter = 4000,
+                  cores = 4,
+                  seed = 12345)
+```
+
+### MODEL RESULTS
+```{r}
+describe_posterior(m2Bstan) #%>%
+  #xtable::xtable()
+```
+
+```{r}
+estimate_means(m2Bstan)
+```
+
+### PLOT MODEL PREDICTIONS
+```{r}
+estim <- estimate_relation(m2Bstan, modulate = "treatment", ci = 0.95)
+
+p3 <- ggplot(estim, aes(x = treatment, y = Predicted)) +
+  geom_pointrange(aes(x=treatment, y=Predicted, ymin=CI_low, ymax=CI_high,
+                      group=treatment)) +
+  geom_pointrange(data=sh2, aes(x=treatment, y=estimate, ymin=lower, ymax=upper, 
+                      color=treatment, group=treatment), 
+                  fatten=1, position=position_jitter(width=0.1, height = 0)) +
+  ylab("Shannon Diversity") +
+  scale_color_manual(values=my_colors) + 
+  scale_fill_manual(values=my_colors) + 
+  theme_modern()
+
+p3
+```
+
+### CONTRASTS
+```{r}
+estimate_contrasts(m2Bstan, transform="response")# %>%
+  #xtable::xtable()
+```
+
+## PLOTS
+```{r}
+library(patchwork)
+
+pfinal <- p1 + p2 + p3 +
+  plot_layout(guides="collect") + 
+  plot_annotation(tag_levels = 'A')
+
+ggsave(here("figs", "fig_s2.svg"), pfinal, width=25.8, height=8, units="cm",
+       device="svg")
+
+```

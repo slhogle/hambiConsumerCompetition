@@ -1,0 +1,528 @@
+---
+title: "Ordination"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+# LIBRARIES
+```{r message=FALSE, warning=FALSE}
+library(here)
+library(tidyverse)
+library(vegan)
+#library(ggvegan)
+library(ape)
+library(ggforce)
+
+source(here::here("bin", "ordination_functions.R"))
+```
+
+# LOAD DATA
+```{r}
+predator <- read_tsv(here::here("data", "predator_density.tsv"), col_types="ccccdddd") %>%
+  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
+         microcosmID=factor(microcosmID))
+
+counts <- read_tsv(here::here("data", "norm_counts.tsv"))
+
+div.sum <- readRDS(here::here("data", "diversity_summary.rds"))
+dvcov <- readRDS(here::here("data", "divnet_out.rds"))
+```
+
+# PHLOSEQ VERSION
+This is just a test running the default ordination methods from phyloseq
+
+First make the physeq object
+```{r}
+library(car)
+
+otumat <- counts %>%
+  filter(day != 0) %>%
+  dplyr::select(sample, strainID, count.correct) %>%
+  pivot_wider(names_from=sample, values_from=count.correct) %>%
+  column_to_rownames(var="strainID") %>%
+  as.matrix()
+
+taxmat <- tibble::tribble(
+     ~strainID,           ~Genus,          ~Species,
+  "HAMBI-0097",    "Acinetobacter",       "lwoffii",
+  "HAMBI-1972",        "Aeromonas",        "caviae",
+  "HAMBI-0105",    "Agrobacterium",   "tumefaciens",
+  "HAMBI-2160",       "Bordetella",         "avium",
+  "HAMBI-0262",    "Brevundimonas",       "bullata",
+  "HAMBI-1988",     "Chitinophaga",        "sancti",
+  "HAMBI-1287",      "Citrobacter",        "koseri",
+  "HAMBI-0403",        "Comamonas",  "testosteroni",
+  "HAMBI-2164",      "Cupriavidus",       "necator",
+  "HAMBI-1279",           "Hafnia",         "alvei",
+  "HAMBI-1299",         "Kluyvera",    "intermedia",
+  "HAMBI-3237",       "Microvirga",   "lotononidis",
+  "HAMBI-2792",        "Moraxella",         "canis",
+  "HAMBI-1292",       "Morganella",      "morganii",
+  "HAMBI-1923",         "Myroides",      "odoratus",
+  "HAMBI-3031",         "Niabella",  "yanshanensis",
+  "HAMBI-2159", "Paraburkholderia",   "caryophylli",
+  "HAMBI-2494", "Paraburkholderia",   "kururiensis",
+  "HAMBI-2443",       "Paracoccus", "denitrificans",
+  "HAMBI-1977",      "Pseudomonas",  "chlororaphis",
+  "HAMBI-0006",      "Pseudomonas",        "putida",
+  "HAMBI-1896", "Sphingobacterium",  "spiritivorum",
+  "HAMBI-1842",      "Sphingobium",    "yanoikuyae",
+  "HAMBI-2659", "Stenotrophomonas",   "maltophilia"
+  ) %>%
+    column_to_rownames(var="strainID") %>%
+    as.matrix()
+
+metadf <- counts %>% 
+  filter(day != 0) %>%
+  dplyr::select(sample=sample, microcosmID, treatment, day, cil, wrm) %>%
+  distinct() %>%
+  mutate(tpool=factor(paste(treatment, day, sep="_"))) %>%
+  column_to_rownames(var="sample")
+
+myphyseq <- phyloseq(otu_table(otumat, taxa_are_rows = TRUE), 
+                   tax_table(taxmat),
+                   sample_data(metadf))
+
+# transform to relative abundances
+myphyseq <- transform_sample_counts(myphyseq, function(x)  x/sum(x))
+```
+
+Using bray-curtis distance and 6 ordination methods
+DCA = detrended correspondence analysis
+CCA = correspondence analysis
+RDA = redundancy analysis
+NMDS = non-metric multidimensional scaling
+MDS = MultiDimensional Scaling
+PCoA = Principal components analysis
+
+```{r}
+dist <- "bray"
+ord_meths <- c("DCA", "CCA", "RDA", "NMDS", "MDS", "PCoA") 
+
+plist <- llply(as.list(ord_meths), function(i, physeq, dist){
+        ordi = ordinate(physeq, method=i, distance=dist)
+        plot_ordination(physeq, ordi, "samples", color="treatment")
+}, myphyseq, dist)
+
+
+names(plist) <- ord_meths
+
+pdataframe <- map_df(plist, function(x){
+    df1 <- x$data[, 1:2] %>% rownames_to_column(var="sample")
+    colnames(df1) = c("sample", "Axis_1", "Axis_2")
+    df2 <- x$data[, 3:8] %>% rownames_to_column(var="sample")
+    return(left_join(df1, df2))
+}, .id="method")
+
+
+pdataframe %>%
+  filter(method=="NMDS") %>%
+  ggplot(aes(Axis_1, Axis_2)) + 
+  geom_link2(aes(group=microcosmID, color=factor(day))) +
+  geom_point(aes(color=factor(day), shape=treatment)) + 
+  #geom_polygon() + 
+  #facet_wrap_paginate(~treatment, nrow=1) + 
+  coord_fixed() + 
+  #scale_fill_brewer(type="qual", palette="Set1") + 
+  #scale_color_carto_d(palette="Bold")
+  scale_colour_brewer(type="qual", palette="Set1")
+```
+
+```{r}
+#install.packages("compositions")
+library(compositions)
+
+
+counts %>%
+  filter(day != 0) %>%
+  group_by(sample) %>% 
+  mutate(p = clr(count.correct+1)/(sum(count.correct)+1))
+
+```
+```{r}
+library(ape)
+library(compositions)
+
+a <- counts %>%
+  filter(day != 0) %>%
+  select(sample, strainID, count.correct) %>%
+  #mutate(count.correct=ifelse(count.correct==0, 1, count.correct)) %>%
+  #group_by(sample) %>%
+  #mutate(count.correct=count.correct/sum(count.correct)) %>%
+  #ungroup() %>%
+  pivot_wider(names_from="strainID", values_from="count.correct") %>%
+  column_to_rownames(var="sample") %>%
+  data.frame()
+
+comp <- acomp(a)
+
+balclr <- clr(comp)
+
+dist <- vegdist(balclr,  method = "euclidean") # Aitchison dissimilarity matrix
+dist <- vegdist(comp,  method = "bray")        # Bray-curtis dissimilarity 
+
+pcoa_ord <- pcoa(dist)
+nmds_ord <- metaMDS(dist)
+
+pcoa2plot <- data.frame(pcoa_ord$vectors[,1:2]) %>% 
+  rownames_to_column(var="sample") %>%
+  left_join(., distinct(select(counts, sample:wrm))) %>%
+  mutate(method="PCoA") %>%
+  dplyr::rename(axis_1 = Axis.1, axis_2 = Axis.2)
+
+nmds2plot <- data.frame(nmds_ord$points) %>%
+  rownames_to_column(var="sample") %>%
+  left_join(., distinct(select(counts, sample:wrm))) %>%
+  mutate(method="NMDS") %>%
+  dplyr::rename(axis_1 = MDS1, axis_2 = MDS2) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))
+
+centroids <- nmds2plot %>% 
+  group_by(treatment, day) %>%
+  dplyr::mutate(NMDS1=mean(axis_1), NMDS2=mean(axis_2),
+                NMDS1sd=sd(axis_1), NMDS2sd=sd(axis_2)) %>%
+  ungroup() %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))
+
+spiders <- nmds2plot %>% 
+  select(sample, fromx=axis_1, fromy=axis_2) %>%
+  left_join(., centroids) %>%
+  dplyr::rename(tox=NMDS1, toy=NMDS2) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))
+
+p4 <- ggplot() + 
+  geom_point(data=nmds2plot, aes(x=axis_1, y=axis_2, color=factor(day)), size=0.5) +
+  geom_segment(data = spiders, aes(x=fromx, xend = tox, 
+                               y=fromy, yend = toy, group=treatment, color=factor(day))) +
+  geom_link2(data = centroids, aes(x=NMDS1, y=NMDS2, group=microcosmID, color=factor(day))) +
+  geom_point(data = centroids, aes(x=NMDS1, y=NMDS2, fill=factor(day), size=((NMDS1sd+NMDS2sd)/2)^-1), shape=21) +
+  facet_grid(~treatment) + 
+  #facet_wrap(~method) + 
+  #coord_fixed() + 
+  #scale_fill_viridis_d() + scale_color_viridis_d()
+  scale_color_brewer(type="qual", palette="Paired") +
+  scale_fill_brewer(type="qual", palette="Paired") +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())
+```
+
+
+```{r}
+data(AnimalVegetation)
+region = factor(ifelse(AnimalVegetation[,5]==1, "A", "B")) # region label
+comp = acomp(AnimalVegetation[,1:4]) # proportions closed between 0 and 1
+
+clr(comp)
+```
+
+
+
+
+
+
+
+
+
+## Custom Functions
+```{r}
+
+```
+
+## Read data
+```{r}
+df_long <- read_tsv(here::here("processed_data", "iina_16S_counts.corrected.tsv"))
+metadf <- read_tsv(here::here("raw_data", "metadata.tsv"))
+```
+
+## Format data for use in ordination
+join metadata and count data
+```{r message=FALSE, warning=FALSE}
+cmb <- left_join(df_long, metadf)
+```
+
+We need to find an optimal way to transform the data before running the ordination and adonis. Ideally data will be normally distributed after transformation, but that is probably a luxury we can't afford. There are many different data transformation techniques such as log, log10, or square root. Since we are talking about bounded frequency data for each species these are essentially probabilities of observing each species. These can therefore be transformed using the [logit or log-odds transform](https://en.wikipedia.org/wiki/Logit) which has desirable properties for this kind of bounded data. For example it is the link function used most commonly for logistic or beta regression. We will examine the distributions of the plain species probability/frequency, the square root transform, and the logit transform.
+
+This next code will:
+- remove HAMBI samples (T0)
+- remove replicate 1
+- calculate probability
+- perform
+  - sqrt transform
+  - logit transform
+```{r}
+cmb1 <- cmb %>% 
+  filter(day != 0) %>%
+  filter(replicate != 1) %>%
+  group_by(sample) %>% 
+  mutate(p = (count.correct+1)/(sum(count.correct)+1)) %>%
+  mutate(psqrt=sqrt(p),
+         plogit=logit(p)) %>%
+  ungroup()
+```
+
+## Examine distributions of different transforms
+
+obviously the plain frequency/probabiltiy is not normally distributed
+```{r message=FALSE, warning=FALSE}
+ggplot(cmb1) +
+  geom_histogram(aes(x=p)) +
+  facet_wrap(~day, nrow=3, scales="free")
+```
+
+The square root transform is not normally distributed either
+```{r message=FALSE, warning=FALSE}
+ggplot(cmb1) +
+  geom_histogram(aes(x=psqrt)) +
+  facet_wrap(~day, nrow=3, scales="free")
+```
+
+The logit transform seems to be best option. It still isnt perfect especially in the later days where we have one or two species really dominating. However, it is the best transformation option I could find.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(cmb1) +
+  geom_histogram(aes(x=plogit)) +
+  facet_wrap(~day, nrow=3, scale="free")
+```
+
+## Ordination for single day
+Using the functions above this step will:
+- filter for only day 5 then cast to wide format 
+- divide each row by the colsums for relative abundance
+- logit transformation
+- move sample names to rownames
+- do the ordination
+- plot the ordination wither spider
+
+```{r message=FALSE, warning=FALSE}
+ord <- rda(makemydf(cmb1, 5, "plogit"))
+
+spiderplot(ord, metadf)
+```
+
+This looks pretty good I think. Plus the variance of cetroids for each group looks quite even. This is just eyeballing and we will check for sure later...
+
+## Ordinations for all days excluding the controls
+Now we want to make an ordination that only includes HNPanc and HNPevo and do one for each day individually
+
+```{r}
+cmb2 <- cmb1 %>%
+  filter(treatment %nin% c("HN", "H"))
+```
+
+Just a for loop for each day saving the results to lists and then flattening the lists to dataframes
+```{r message=FALSE, warning=FALSE}
+lista <- list()
+listb <- list()
+listc <- list()
+
+for (i in c(5, 9, 13, 17, 21, 29, 45, 61)) {
+  myord <- rda(makemydf(cmb2, i, "plogit"))
+
+  a <- ordfort(myord, metadf)
+  b <- groupcentroids(a)
+  c <- spiderize(a, b)
+  
+  lista[[paste("day", i, sep="")]] <- a
+  listb[[paste("day", i, sep="")]] <- b
+  listc[[paste("day", i, sep="")]] <- c
+}
+  
+fctriz <- function(.data){
+  .data %>% mutate(Day=factor(Day,
+                    levels=c("day5", "day9", "day13", "day17", 
+                             "day21", "day29", "day45", "day61")))
+}
+
+dfa <- bind_rows(lista, .id = "Day") %>% fctriz()
+dfb <- bind_rows(listb, .id = "Day") %>% fctriz()
+dfc <- bind_rows(listc, .id = "Day") %>% fctriz()
+```
+
+Plot the ordinations for each day
+```{r}
+p <- ggplot(filter(dfa, Score=="sites")) +
+  geom_point(aes(x=PC1, y=PC2, color=treatment), size=0.5) +
+  geom_segment(data = dfc, aes(x=fromx, xend = tox, 
+                                   y=fromy, yend = toy,
+                                   color=treatment)) +
+  geom_point(data=dfb, aes(x=PC1, y=PC2, fill=treatment), shape=21, size=1) +
+  #facet_wrap(~Day, nrow=3) +
+  facet_grid(~Day) +
+  coord_fixed() +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank())
+
+p
+ggsave(plot=p, filename = here::here("figs", "combined_ordination.svg"), device="svg", height=4, width=9, dpi = 300)
+```
+
+This also looks quite good. There are no big variance differences between groups. The largest is at day61. 
+
+This is just a single plot for day 5 that omits the controls
+```{r message=FALSE, warning=FALSE}
+ord <- rda(makemydf(cmb2, 5, "plogit"))
+
+spiderplot(ord, metadf)
+```
+
+## Adonis testing
+Now we actually want to perform some statistical tests to determine whether the treatment groups are statistically different from each other and by how much.
+
+We use the permanova proceduer which is just an analysis of variance using distance matrices — for partitioning distance matrices among sources of variation and fitting linear models (e.g., factors, polynomial regression) to distance matrices; uses a permutation test with pseudo-F ratios.
+
+First we get the data in the right format for the tests
+```{r}
+adoninput1 <- cmb2 %>%
+  pivot_wider(id_cols="sample", 
+              names_from = "strainID", 
+              values_from = "plogit") %>%
+  column_to_rownames(var="sample") %>%
+  as.data.frame()
+
+adoninput2 <- cmb2 %>% 
+  select(sample, treatment, day) %>%
+  mutate(worm=ifelse(str_detect(sample, "HNP"), 1, 0)) %>%
+  mutate(evo=ifelse(str_detect(sample, "evo"), 1, 0)) %>%
+  distinct() %>%
+  column_to_rownames(var="sample") %>%
+  as.data.frame()
+```
+
+Run the test
+```{r}
+adonis2(adoninput1 ~ day*worm*evo, 
+        data = adoninput2,
+        method = "manhattan")
+```
+
+Here is adonis using "manhattan" distance matrix which empirically seems to be the best one. Results show that time is the biggest factor driving differences followed by the presence of the worm, then the evolution of the ciliate, and finally the interaction between ciliate and worm. This basically is showing us what we could intuit from the bar plots. Namely:
+
+1. All bacteria communities change a lot over time. R2=0.32
+2. Bacteria communities change a lot if the worm is added and this is regardless of the evolution of the ciliate co-predator. R2=0.07
+3. Bacteria communities change if the ciliate is evolved and this is regardless of worm presence/absence. R2=0.024
+4. The change in bacteria communties as a result of worm presence/absence is dependent on the evolution of the ciliate co-predator. The variance associated with this interaction is almost equal in magnitude to that from ciliate evolution alone. R2=0.023
+
+Summary: it's very interconnected. Time seems to be most important but that's not of interest here. Worm drives the biggest community shifts, followed by ciliate evolution, and there is an almost equal effect of evolution:worm interaction. *So the effect of evolution on predator coexistence has basically the same impact on the bacterial community as the effect of evolution in a single predator system.*
+
+## Check for equal dispersions among groups
+This is important because you can get significant Adonis results if there is no  difference in mean centroids between groups but rather a difference in the variances between groups. We need to make sure what we are seeing above is real. Spoiler: it is real. You can read on to see why...
+
+betadisper is a multivariate analogue of Levene's test for homogeneity of variances. It implements PERMDISP2 for testing of multivariate homogeneity. Apparently you can only check one group at a time...
+
+### All groups simultaneously
+First step is to look at all possible groups simultaneously as a combination of treatment and day.
+
+*Results show that there is no significant variance differences between treatment-day groupings.*
+```{r}
+mod0 <- betadisper(vegdist(adoninput1, method = "manhattan"), 
+                  paste(adoninput2[,1], adoninput2[,2], sep="_"))
+```
+
+To test if one or more groups is more variable than the others, ANOVA of the distances to group centroids can be performed and parametric theory used to interpret the significance of F.*Not Significant*
+```{r}
+anova(mod0)
+```
+
+permutest permutes model residuals to generate a permutation distribution of F under the null hypothesis of no difference in dispersion between groups. *Not Significant*
+```{r}
+permutest(mod0, permutations = 999)
+```
+
+classical comparison of group dispersions calculated using Tukey's Honest Significant Differences between groups, via TukeyHSD.betadisper. *No pairwise comparisons Significant*
+```{r message=FALSE, warning=FALSE, include=FALSE}
+TukeyHSD(mod0)
+```
+
+```{r message=FALSE, warning=FALSE}
+plot(mod0, ellipse = TRUE, hull = FALSE, conf = 0.90)
+```
+
+```{r}
+boxplot(mod0)
+```
+
+### Groups individually
+
+We can also look at day, worm, and evolution individually...
+
+#### Day
+```{r}
+mod1 <- betadisper(vegdist(adoninput1, method = "manhattan"), 
+                  adoninput2[,2])
+```
+
+To test if one or more groups is more variable than the others, ANOVA of the distances to group centroids can be performed and parametric theory used to interpret the significance of F.*Not Significant*
+```{r}
+anova(mod1)
+```
+
+permutest permutes model residuals to generate a permutation distribution of F under the null hypothesis of no difference in dispersion between groups. *Not Significant*
+```{r}
+permutest(mod1, permutations = 999)
+```
+
+classical comparison of group dispersions calculated using Tukey's Honest Significant Differences between groups, via TukeyHSD.betadisper. *No pairwise comparisons Significant*
+```{r message=FALSE, warning=FALSE, include=FALSE}
+TukeyHSD(mod1)
+```
+
+```{r message=FALSE, warning=FALSE}
+plot(mod1, ellipse = TRUE, hull = FALSE, conf = 0.90)
+```
+
+```{r}
+boxplot(mod1)
+```
+
+#### Worm
+```{r}
+mod2 <- betadisper(vegdist(adoninput1, method = "manhattan"), 
+                  adoninput2[,3])
+```
+
+To test if one or more groups is more variable than the others, ANOVA of the distances to group centroids can be performed and parametric theory used to interpret the significance of F.*Not Significant*
+```{r}
+anova(mod2)
+```
+
+permutest permutes model residuals to generate a permutation distribution of F under the null hypothesis of no difference in dispersion between groups. *Not Significant*
+```{r}
+permutest(mod2, permutations = 999)
+```
+
+```{r message=FALSE, warning=FALSE}
+plot(mod2, ellipse = TRUE, hull = FALSE, conf = 0.90)
+```
+
+```{r}
+boxplot(mod2)
+```
+
+#### Ciliate evolution
+```{r}
+mod3 <- betadisper(vegdist(adoninput1, method = "manhattan"), 
+                  adoninput2[,4])
+```
+
+To test if one or more groups is more variable than the others, ANOVA of the distances to group centroids can be performed and parametric theory used to interpret the significance of F.*Not Significant*
+```{r}
+anova(mod3)
+```
+
+permutest permutes model residuals to generate a permutation distribution of F under the null hypothesis of no difference in dispersion between groups. *Not Significant*
+```{r}
+permutest(mod3, permutations = 999)
+```
+
+```{r message=FALSE, warning=FALSE}
+plot(mod3, ellipse = TRUE, hull = FALSE, conf = 0.90)
+```
+
+```{r}
+boxplot(mod3)
+```

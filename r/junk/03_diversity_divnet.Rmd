@@ -1,0 +1,282 @@
+---
+title: "Shannon diversity"
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+    fig_width: 7
+    fig_height: 5
+    dev: svg
+    keep_html: yes
+    html_preview: yes
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(phyloseq)
+library(breakaway)
+library(DivNet)
+```
+
+# LOAD DATA
+```{r}
+predator <- read_tsv(here("data", "predator_density.tsv"), col_types="ccccdddd") %>%
+  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
+         microcosmID=factor(microcosmID))
+
+counts <- read_tsv(here::here("data", "norm_counts.tsv"))
+```
+
+# CREATE PHYSEQ
+Breakaway and DivNet all use the phyloseq format. Need to convert our data into that format.
+
+```{r}
+otumat <- counts %>%
+  dplyr::select(sample, strainID, count.correct) %>%
+  pivot_wider(names_from=sample, values_from=count.correct) %>%
+  column_to_rownames(var="strainID") %>%
+  as.matrix()
+
+taxmat <- tibble::tribble(
+     ~strainID,           ~Genus,          ~Species,
+  "HAMBI-0097",    "Acinetobacter",       "lwoffii",
+  "HAMBI-1972",        "Aeromonas",        "caviae",
+  "HAMBI-0105",    "Agrobacterium",   "tumefaciens",
+  "HAMBI-2160",       "Bordetella",         "avium",
+  "HAMBI-0262",    "Brevundimonas",       "bullata",
+  "HAMBI-1988",     "Chitinophaga",        "sancti",
+  "HAMBI-1287",      "Citrobacter",        "koseri",
+  "HAMBI-0403",        "Comamonas",  "testosteroni",
+  "HAMBI-2164",      "Cupriavidus",       "necator",
+  "HAMBI-1279",           "Hafnia",         "alvei",
+  "HAMBI-1299",         "Kluyvera",    "intermedia",
+  "HAMBI-3237",       "Microvirga",   "lotononidis",
+  "HAMBI-2792",        "Moraxella",         "canis",
+  "HAMBI-1292",       "Morganella",      "morganii",
+  "HAMBI-1923",         "Myroides",      "odoratus",
+  "HAMBI-3031",         "Niabella",  "yanshanensis",
+  "HAMBI-2159", "Paraburkholderia",   "caryophylli",
+  "HAMBI-2494", "Paraburkholderia",   "kururiensis",
+  "HAMBI-2443",       "Paracoccus", "denitrificans",
+  "HAMBI-1977",      "Pseudomonas",  "chlororaphis",
+  "HAMBI-0006",      "Pseudomonas",        "putida",
+  "HAMBI-1896", "Sphingobacterium",  "spiritivorum",
+  "HAMBI-1842",      "Sphingobium",    "yanoikuyae",
+  "HAMBI-2659", "Stenotrophomonas",   "maltophilia"
+  ) %>%
+    column_to_rownames(var="strainID") %>%
+    as.matrix()
+
+metadf <- counts %>% 
+  dplyr::select(sample=sample, microcosmID, treatment, day, cil, wrm) %>%
+  distinct() %>%
+  mutate(tpool=factor(paste(treatment, day, sep="_"))) %>%
+  column_to_rownames(var="sample")
+
+myphyseq <- phyloseq(otu_table(otumat, taxa_are_rows = TRUE), 
+                   tax_table(taxmat),
+                   sample_data(metadf))
+```
+
+# ESTIMATE DIVERSITY
+
+## PLUGIN STANDARD ESTIMATE
+```{r}
+plugin <- estimate_richness(myphyseq, measures = "Shannon") %>% 
+  rownames_to_column(var="sample") %>%
+  dplyr::rename(estimate=Shannon) %>%
+  mutate(div="Shannon", inference="plugin")
+```
+
+## DIVNET ESTIMATE (TAKES A LONG TIME)
+```{r eval=FALSE, include=TRUE}
+dv.cov1 <- divnet(myphyseq, ncores=1, tuning="fast",
+                 X=model.matrix(~ tpool, data = metadf))
+```
+
+## SAVE DIVNET ESTIMATE
+```{r}
+saveRDS(dv.cov1, here::here("data", "divnet_out.rds"))
+```
+
+## SAVE SHANNON SUMMARY
+```{r eval=FALSE, include=TRUE}
+summary <- summary(dv.cov1$shannon) %>%
+  dplyr::select(sample=sample_names, estimate, lower, upper) %>%
+  mutate(div="Shannon", inference="divnet") %>%
+  bind_rows(., plugin)%>%
+  left_join(., dplyr::select(counts, sample, microcosmID, treatment, replicate, day, cil, wrm) %>% distinct())
+
+saveRDS(summary, here::here("data", "shannon_summary.rds"))
+```
+
+## LOAD DIVNET ESTIMATE
+```{r}
+dv.cov1 <- readRDS(here::here("data", "divnet_out.rds"))
+summary <- readRDS(here::here("data", "diversity_summary.rds"))
+```
+
+# PLOTS
+
+## PLUGIN SHANNON DIVERSITY PLOT
+```{r}
+ggplot(summary) + 
+  geom_line(aes(x=day, y=estimate, color=treatment, group=microcosmID)) + 
+  geom_pointrange(aes(x=day, y=estimate, ymin=lower, ymax=upper, 
+                      color=treatment, group=microcosmID), fatten=0.5) + 
+  facet_grid(inference~treatment) +
+  scale_fill_viridis_c(option="B", name=NULL) + 
+  labs(y="Shannon Diversity", x="Day") +
+  theme_bw() +
+  theme(legend.position = "none")
+```
+
+# PLOT BRAY CURTIS
+```{r}
+dvbc <- data.frame(dv.cov1$`bray-curtis`) %>% 
+  rownames_to_column(var="sampleA") %>%
+  pivot_longer(-sampleA, names_to="sampleB", values_to="mean") %>%
+  mutate(sampleA=str_replace_all(sampleA, "_|-", "."),
+         sampleB=str_replace_all(sampleB, "_|-", ".")) %>%
+  mutate(day=case_when(str_detect(sampleA, "d0") & str_detect(sampleB, "d0") ~ 0,
+                       str_detect(sampleA, "d5") & str_detect(sampleB, "d5") ~ 5,
+                       str_detect(sampleA, "d9") & str_detect(sampleB, "d9") ~ 9,
+                       str_detect(sampleA, "d13") & str_detect(sampleB, "d13") ~ 13,
+                       str_detect(sampleA, "d17") & str_detect(sampleB, "d17") ~ 17,
+                       str_detect(sampleA, "d21") & str_detect(sampleB, "d21") ~ 21,
+                       str_detect(sampleA, "d29") & str_detect(sampleB, "d29") ~ 29,
+                       str_detect(sampleA, "d45") & str_detect(sampleB, "d45") ~ 45,
+                       str_detect(sampleA, "d61") & str_detect(sampleB, "d61") ~ 61,
+                       TRUE ~ NA_real_)) %>% drop_na() %>% 
+  mutate(sampleA=str_replace_all(sampleA, "\\d\\.d\\d+", "")) %>%
+  mutate(sampleB=str_replace_all(sampleB, "\\d\\.d\\d+", "")) %>%
+  distinct() %>%
+  mutate(sampleA=factor(sampleA, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))) %>%
+  mutate(sampleB=factor(sampleB, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))) %>%
+  arrange(sampleA, sampleB) %>%
+  group_by(grp = paste0(pmin(as.character(sampleA), as.character(sampleB)),
+                        pmax(as.character(sampleA), as.character(sampleB)), 
+                        as.character(day))) %>%
+  slice(1) %>%
+  ungroup() %>% 
+  select(-grp) %>%
+  mutate(sampleA=factor(sampleA, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))) %>%
+  mutate(sampleB=factor(sampleB, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo"))))
+  
+dvbc_var <- data.frame(dv.cov1$`bray-curtis-variance`) %>% 
+  rownames_to_column(var="sampleA") %>%
+  pivot_longer(-sampleA, names_to="sampleB", values_to="variance") %>%
+  mutate(sampleA=str_replace_all(sampleA, "_|-", "."),
+         sampleB=str_replace_all(sampleB, "_|-", ".")) %>%
+  mutate(day=case_when(str_detect(sampleA, "d0") & str_detect(sampleB, "d0") ~ 0,
+                       str_detect(sampleA, "d5") & str_detect(sampleB, "d5") ~ 5,
+                       str_detect(sampleA, "d9") & str_detect(sampleB, "d9") ~ 9,
+                       str_detect(sampleA, "d13") & str_detect(sampleB, "d13") ~ 13,
+                       str_detect(sampleA, "d17") & str_detect(sampleB, "d17") ~ 17,
+                       str_detect(sampleA, "d21") & str_detect(sampleB, "d21") ~ 21,
+                       str_detect(sampleA, "d29") & str_detect(sampleB, "d29") ~ 29,
+                       str_detect(sampleA, "d45") & str_detect(sampleB, "d45") ~ 45,
+                       str_detect(sampleA, "d61") & str_detect(sampleB, "d61") ~ 61,
+                       TRUE ~ NA_real_)) %>% drop_na() %>% 
+  mutate(sampleA=str_replace_all(sampleA, "\\d\\.d\\d+", "")) %>%
+  mutate(sampleB=str_replace_all(sampleB, "\\d\\.d\\d+", "")) %>%
+  distinct() %>%
+  mutate(sampleA=factor(sampleA, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))) %>%
+  mutate(sampleB=factor(sampleB, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))) %>%
+  arrange(sampleA, sampleB) %>%
+  group_by(grp = paste0(pmin(as.character(sampleA), as.character(sampleB)),
+                        pmax(as.character(sampleA), as.character(sampleB)), 
+                        as.character(day))) %>%
+  slice(1) %>%
+  ungroup() %>% 
+  select(-grp) %>%
+  mutate(sampleA=factor(sampleA, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo")))) %>%
+  mutate(sampleB=factor(sampleB, levels=rev(c("H", "HPanc", "HPevo", "HN", "HNPanc", "HNPevo"))))
+```
+
+```{r}
+p0 <- dvbc %>% 
+  filter(day != 0) %>%
+  ggplot(aes(x=sampleA, y=sampleB, fill=mean)) + 
+   geom_tile() + 
+   facet_grid(~day) +
+   scale_fill_viridis_c() + 
+   coord_fixed()
+
+p0
+```
+
+```{r}
+dvbc.fmt <- dvbc %>% 
+  arrange(sampleA, sampleB) %>%
+  group_by(grp = paste0(pmin(as.character(sampleA), as.character(sampleB)),
+                        pmax(as.character(sampleA), as.character(sampleB)), 
+                        as.character(day))) %>%
+  slice(1) %>%
+  ungroup() %>% 
+  select(-grp) #%>% 
+  #filter(sampleA != sampleB) 
+
+dvbc_var.fmt <- dvbc_var %>% 
+  arrange(sampleA, sampleB) %>%
+  group_by(grp = paste0(pmin(as.character(sampleA), as.character(sampleB)),
+                        pmax(as.character(sampleA), as.character(sampleB)), 
+                        as.character(day))) %>%
+  slice(1) %>%
+  ungroup() %>% 
+  select(-grp) %>% 
+  filter(sampleA != sampleB) 
+
+thresh <- tibble::tribble(
+  ~treatment, ~day,       ~event,
+        "HN",  17, "stabilized",
+     "HPanc",  20, "stabilized",
+     "HPevo",  20, "stabilized",
+    "HNPanc",  21, "stabilized",
+    "HNPevo",  25, "stabilized",
+    "HNPevo",  32,       "lost",
+    "HNPanc",  11,       "lost"
+  ) %>%
+  mutate(event=factor(event))
+
+
+p1 <- left_join(dvbc.fmt, dvbc_var.fmt) %>%
+  ggplot(aes(x=day, y=mean, color=sampleB)) +
+  geom_linerange(aes(ymin=mean-variance*10, ymax=mean+variance*10)) +
+  geom_point() + 
+  geom_line() +
+  #geom_vline(data=thresh, aes(xintercept=day, linetype=event)) + 
+  facet_grid(sampleA~sampleB) +
+  theme_bw() +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank())
+
+p1
+```
+
+```{r}
+H.HPanc <- left_join(dvbc.fmt, dvbc_var.fmt) %>%
+  filter(sampleB == "HPanc", sampleA=="HN") %>%
+  filter(day < 22) %>%
+  select(mean, variance)
+
+H.HPevo <- left_join(dvbc.fmt, dvbc_var.fmt) %>%
+  filter(sampleB == "HPevo", sampleA=="HN") %>%
+  filter(day < 22) %>%
+  select(mean, variance)
+
+bind_rows(H.HPanc, H.HPevo) %>% pull(mean)
+```
+
+```{r}
+betta(bind_rows(H.HPanc, H.HPevo) %>% pull(mean), 
+      bind_rows(H.HPanc, H.HPevo) %>% pull(variance), 
+      cbind("intercept" = c(1,1,1,1,1,1,
+                            1,1,1,1,1,1),
+            "evo" = c(0,0,0,0,0,0,
+                      1,1,1,1,1,1)))
+```
+
