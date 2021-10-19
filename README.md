@@ -56,40 +56,42 @@ Running under: Pop!_OS 21.04
 Go through these steps in order to reproduce the analysis in the paper. 
 
 ## 1. Format data
-1. [`rpkm2tab.R`](r/rpkm2tab.R) -- format bbmap output to tables
-2. [`format_raw_data.R`](r/format_raw_data.R) -- format raw density data for downstream use
+1. [`rpkm2tab.R`](R/rpkm2tab.R) -- format bbmap output to tables
+2. [`format_raw_data.R`](R/format_raw_data.R) -- format raw density data for downstream use
 
 ## 2. Process amplicon
-2. [`correct_bias.R`](r/correct_bias.R) -- applying method from [this paper](https://elifesciences.org/articles/46923)
-3. [`normalize_counts.R`](r/normalize_counts.R) -- normalizing sequencing counts for later 
+2. [`correct_bias.R`](R/correct_bias.R) -- applying method from [this paper](https://elifesciences.org/articles/46923)
+3. [`normalize_counts.R`](R/normalize_counts.R) -- normalizing sequencing counts for later 
 
-## 3. Model consumer/prey densities
-1. [`gam_ciliate_density.R`](r/gam_ciliate_density.R) -- fit GAM used in Table S2 and Fig 2
-2. [`gam_OD600_density.R`](r/gam_OD600_density.R) -- fit GAM used in Table S3 and Fig 2
-3. [`gam_nematode_density.R`](r/gam_nematode_density.R) -- fit GAM used in Table S4 and Fig 2
-4. [`competitive_LV.R`](r/competitive_LV.R) -- parameterize LV competitive model
-5. [`fig2.R`](r/fig2.R) -- Reproduces Fig. 2 from the main text
+## 3. Model consumeR/prey densities
+1. [`gam_ciliate_density.R`](R/gam_ciliate_density.R) -- fit GAM used in Table S2 and Fig 2
+2. [`gam_OD600_density.R`](R/gam_OD600_density.R) -- fit GAM used in Table S3 and Fig 2
+3. [`gam_nematode_density.R`](R/gam_nematode_density.R) -- fit GAM used in Table S4 and Fig 2
+4. [`competitive_LV.R`](R/competitive_LV.R) -- parameterize LV competitive model
+5. [`fig2.R`](R/fig2.R) -- Reproduces Fig. 2 from the main text
 
 ## 4. Prey community composition
-1. [`figS1a.R`](r/figS1a.R) -- Reproduces Fig. S1A from supplementary
-2. [`community_dissimilarity_plot.R`](r/community_dissimilarity_plot.R) -- Reproduces Fig. S1B from supplementary
-3. [`community_dissimilarity_regression.R`](r/community_dissimilarity_regression.R) -- Reproduces Table S5
-4. [`shannon_diversity.R`](r/shannon_diversity.R) -- Run divnet estimate of Shannon diversity and save result
-5. [`shannon_change_point_regression.R`](r/shannon_change_point_regression.R) -- Perform multiple change point regression of the shannon diversity estimate. Reproduces Fig. S2.
-6. [`shannon_sort_eq_regression_bayes.R`](r/shannon_sort_eq_regression_bayes.R) -- Performs regression using MCMC from Stan on the Shannon estimates in the two experimental phases. Reproduces Fig. S3 and Tables S6 and S7
-  a. [`shannon_sort_eq_regression_freq.R`](r/shannon_sort_eq_regression_freq.R) -- Performs frequentist regression. No Stan required
-7. [`ordination.R`](r/ordination.R) -- Ordination and jump lengths. Generate Fig. 3C and Table S8
-8. [`fig3.R`](r/fig3.R) -- Generate final Fig 3
+1. [`figS1a.R`](R/figS1a.R) -- Reproduces Fig. S1A from supplementary
+2. [`community_dissimilarity_plot.R`](R/community_dissimilarity_plot.R) -- Reproduces Fig. S1B from supplementary
+3. [`community_dissimilarity_regression.R`](R/community_dissimilarity_regression.R) -- Reproduces Table S5
+4. [`shannon_diversity.R`](R/shannon_diversity.R) -- Run divnet estimate of Shannon diversity and save result
+5. [`shannon_change_point_regression.R`](R/shannon_change_point_regression.R) -- Perform multiple change point regression of the shannon diversity estimate. Reproduces Fig. S2.
+6. [`shannon_sort_eq_regression_bayes.R`](R/shannon_sort_eq_regression_bayes.R) -- Performs regression using MCMC from Stan on the Shannon estimates in the two experimental phases. Reproduces Fig. S3 and Tables S6 and S7
+  a. [`shannon_sort_eq_regression_freq.R`](R/shannon_sort_eq_regression_freq.R) -- Performs frequentist regression. No Stan required
+7. [`ordination.R`](R/ordination.R) -- Ordination and jump lengths. Generate Fig. 3C and Table S8
+8. [`fig3.R`](R/fig3.R) -- Generate final Fig 3
 
 ## 5. Bacteria traits
-1. ['traits.R'](r/traits.R) -- Load and format trait data for use with JSDM models
+1. [`traits.R`](R/traits.R) -- Load and format trait data for use with JSDM models
 
 ## 6. Joint species distribution modeling
-1. JSDM_format_sort.R
-2. JSDM_format_qeq.R
-2. puhti_hmsc_mcmc.sh executes puhti_hmsc_mcmc.R
-3. puhti_hmsc_crossvaliation.sh executes puhti_hmsc_crossvaliation.R
-4. JSDM_convergence.R
-5. JSDM_inspect.R
+1. [`JSDM_format_sort.R`](R/JSDM_format_sort.R) -- formats sorting phase models. Models need to be uploaded to cluster afterward
+2. [`JSDM_format_qeq.R`](R/JSDM_format_qeq.R) -- formats equilibrium phase models. Models need to be uploaded to cluster afterward
+2. [`puhti_hmsc_mcmc.sh`](R/puhti_hmsc_mcmc.sh) -- executes `puhti_hmsc_mcmc.R` and fits models using MCMC
+3. [`puhti_hmsc_crossvaliation.sh`](R/puhti_hmsc_crossvaliation.sh) executes `puhti_hmsc_crossvaliation.R` and performs 5-fold cross validation to determine predictive performance of the full models
+4. [`JSDM_convergence.R`](R/JSDM_convergence.R) -- Various stats to demonstrate chains have converged
+5. [`JSDM_inspect.R`](R/JSDM_inspect.R) -- Produces Table S9 and S10 and main text Fig. 4
 
 ## 7. Consumer feeding efficiency
+[`fig5.R`](R/fig5.R) -- generates Figure 5 from main text
+[`consumer_feeding_stats.R`](R/consumer_feeding_stats.R) -- reproduces Table S11 and S12

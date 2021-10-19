@@ -29,7 +29,9 @@ tax <- tibble::tribble(
   "HAMBI-2659", "Stenotrophomonas",   "maltophilia"
 )
 
-# ggplot theme
+
+# Plotting ----------------------------------------------------------------
+
 library(rcartocolor)
 my_colors <- carto_pal(6, "Vivid")
 names(my_colors) <- c("HPanc", "HPevo", "HN", "HNPanc", "HNPevo", "H")
@@ -39,6 +41,25 @@ my_theme <- theme_bw() +
         panel.grid.minor = element_blank(),
         legend.position = "none")
 
+fancy_scientific <- function(l) {
+  # turn in to character string in scientific notation
+  l <- format(l, scientific = TRUE)
+  # e+00 becomes 1
+  l <- gsub("e\\+00", "", l)
+  # quote the part before the exponent to keep all the digits
+  l <- gsub("^(.*)e", "'\\1'e", l)
+  # remove prefactor 1
+  l <- gsub("'1'e", "10^", l)
+  # turn the 'e+' into plotmath format
+  l <- gsub("e", "%*%10^", l)
+  # remove plus
+  l <- gsub("\\+", "", l)
+  # return this as an expression
+  parse(text=l)
+}
+
+scientific_10_exp_labels <- trans_format("log10", math_format(10^.x) )
+scientific_10_exp_breaks <- trans_format("log10", function(x) 10^x )
 
 # mytheme = function() {
 #   theme(
@@ -53,62 +74,31 @@ my_theme <- theme_bw() +
 #   )
 # }
 
+
+# Convenience functions ---------------------------------------------------
+
 # opposite of %in% fuction
 `%nin%` = Negate(`%in%`)
 
-# logit transform
-logit = function(x){
-  log(x/(1-x))
-}
-
-minnz = function(V) {
-  # Calculates the smallest value of the vector except for 0 (non-zero minumum)
-  # Argument: vector
-  C <- NULL        # prepare
-  k <- length(V)   # count to
-  for (i in 1:k) { # check all
-    if ((V[i] == 0) == FALSE) (C[i] <- V[i]) else (C[i] <- 9999919) # if V[i] is not 0, add it to C
-  }
-  m <- min(C)               # minimum of V, not counting 0
-  if (max(V) == 1) (m <- 1) # fix for binary vectors (0,1)
-  if (m == 9999919) (warning("Error: Minimum calculation failed."))  # warning because of hard-coded replacement
-  return(m)
-}
-
+# creates 95% quantile
 quibble95 = function(x, q = c(0.025, 0.5, 0.975)) {
   tibble(x = quantile(x, q), quantile = c("q2.5", "q50", "q97.5"))
 }
 
-grouped_bbdml_quantiles95 = function (x, B = 1000, ...) {
-  mod = x
-  
-  M = mod$M
-  W = mod$W
-  
-  ymin = ymax = rep(NA, length(M))
-  sims = matrix(NA, nrow = B, ncol = length(W))
-  newdat = mod$dat
-  
-  for (i in 1:B) {
-    sim = simulate(mod, nsim = length(W))
-    newdat$W = sim
-    refit = suppressWarnings(bbdml(mod$formula, phi.formula = mod$phi.formula, 
-                                   link = mod$link, phi.link = mod$phi.link, inits = mod$inits, 
-                                   data = newdat))
-    sims[i, ] = simulate(refit, nsim = length(W))
-  }
-  
-  predall = (t(sims) / M)
-  rownames(predall) = rownames(mod$dat)
-  
-  df = data.frame(cbind(predall, mod$dat)) %>%
-    pivot_longer(-W:-last_col()) %>%
-    group_by(days, pseudomonas_hist, predation) %>%
-    summarize(quibble95(value))
-  
-  return(df) 
-}
-
+# scales mean by sd
 scale2 <- function(x, na.rm = FALSE) {
   (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
 }
+
+# calculates the coefficient of variation
+cv <- function(x, na.rm=TRUE){
+  sd(x, na.rm=na.rm)/mean(x, na.rm=na.rm)
+}
+
+# for scaling plot axis by arcsin 
+arcsinsqrt_trans <- trans_new(
+  name = "arcsinsqrt",
+  trans = function(x) asin(x^0.5),
+  inverse = function(x) (sin(x))^2,
+  breaks = breaks_extended(n = 6)
+)
