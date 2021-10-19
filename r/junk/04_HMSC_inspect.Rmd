@@ -1,0 +1,191 @@
+---
+title: "HMSC: Check results"
+output:
+  github_document:
+    toc: yes
+    toc_depth: 2
+    fig_width: 7
+    fig_height: 5
+    dev: svg
+    keep_html: yes
+    html_preview: yes
+---
+
+In this notebook we:
+
+1. Load the fitted models
+2. Get parameter estimates for Beta, Gamma, and Omega
+3. Plot parameter estimates
+
+# LIBRARIES
+```{r eval=TRUE, include=FALSE}
+library(here)
+library(tidyverse)
+library(ape)
+library(Hmsc)
+library(rcartocolor)
+library(patchwork)
+
+source(here::here("bin", "hmsc_funs.R"))
+```
+
+# SELECTED MODELS
+```{r}
+models <- c("qeq_ma_full_thin_1000_samples_250_chains_4.rds", "qeq_mp_full_thin_1000_samples_250_chains_4.rds",
+            "sort_ma_full_thin_1000_samples_250_chains_4.rds", "sort_mp_full_thin_1000_samples_250_chains_4.rds")
+```
+
+# VARIANCE PARTITIONING
+Check how well model explains fraction variance of each species
+```{r}
+vp <- map_dfr(models, vpformat)
+```
+
+Express in terms of R2 - Check how well model explains fraction variance of each species
+```{r}
+r2 <- map_dfr(models, R2fit)
+
+vpr2 <- left_join(vp, r2) %>%
+  mutate(tvar = case_when(distribution=="normal" ~ fvar*R2,
+                          distribution=="probit" ~ -fvar*R2)) %>%
+  mutate(phase=factor(phase, levels=c("sorting", "quasi-equilibrium")))
+```
+
+Setup a custom color palette
+```{r}
+carto_pal(5, "Vivid")
+```
+
+Sorting phase
+```{r}
+snorcols <- c("#f0f0f0", "#d9d9d9", "#bdbdbd", "#969696", "#f66356", "#ee4d5a", "#826dba", "#63589f",
+            "#7ccba2", "#46aea0")
+
+snor <- vpr2 %>%
+  filter(phase=="sorting" & distribution=="normal") %>%
+  mutate(species=fct_reorder2(species, variable, R2)) %>%
+  arrange(species) %>%
+  distinct(species) %>%
+  mutate(species=str_remove(species, "HAMBI-")) %>% pull()
+
+vpr2.s <- vpr2 %>% filter(phase=="sorting" & distribution=="normal") %>% 
+  mutate(species=str_remove(species, "HAMBI-")) %>%
+  mutate(species=factor(species, level=snor))
+```
+
+Quasi equilibrium phase
+```{r}
+qnorcols <- c("#f0f0f0", "#d9d9d9", "#bdbdbd", "#f66356", "#826dba", "#7ccba2")
+
+qnor <- vpr2 %>%
+  filter(phase=="quasi-equilibrium" & distribution=="normal") %>%
+  mutate(species=fct_reorder2(species, variable, R2)) %>%
+  arrange(species) %>%
+  distinct(species) %>% 
+  mutate(species=str_remove(species, "HAMBI-")) %>% pull()
+
+vpr2.q <- vpr2 %>% filter(phase=="quasi-equilibrium" & distribution=="normal") %>% 
+  mutate(species=str_remove(species, "HAMBI-")) %>%
+  mutate(species=factor(species, level=qnor))
+```
+
+# POSTERIOR ESTIMATES BETA
+```{r}
+b <- map_dfr(models, betaformat, 0.95)
+```
+
+```{r}
+beta.s <- b %>% filter(distribution=="normal") %>%
+  filter(!(variable %in% c("(Intercept)", "effort"))) %>%
+  filter(phase=="sorting") %>%
+  mutate(species=str_remove(species, "HAMBI-")) %>%
+  mutate(species=factor(species, level=snor))
+  
+beta.q <- b %>% filter(distribution=="normal") %>%
+  filter(!(variable %in% c("(Intercept)", "effort"))) %>%
+  filter(phase=="quasi-equilibrium") %>%
+  mutate(species=str_remove(species, "HAMBI-")) %>%
+  mutate(species=factor(species, level=qnor))
+```
+
+# POSTERIOR TRAITS
+```{r}
+g <- map_dfr(models, gammaformat, 0.95)
+```
+
+```{r}
+gamma.s <- g %>% filter(distribution=="normal") %>%
+  filter(!(variable %in% c("(Intercept)", "effort"))) %>%
+  filter(trait != "Intercept") %>%
+  filter(phase=="sorting") 
+  
+gamma.q <- g %>% filter(distribution=="normal") %>%
+  filter(!(variable %in% c("(Intercept)", "effort"))) %>%
+  filter(trait != "Intercept") %>%
+  filter(phase=="quasi-equilibrium")
+```
+
+A negative interaction coefficient means that the effect of the combined action of two predictors is less then the sum of the individual effects. The concrete interpretation is done best visually by inspecting an interaction plot.
+
+```{r}
+tgr <- traitgradient("qeq_ma_full_thin_1000_samples_250_chains_4.rds")
+
+ggplot(tgr) + 
+  geom_pointrange(aes(x=cil, y=me, ymax=hi, ymin=lo, color=factor(wrm))) +
+  facet_wrap(~trait, scales="free_y", nrow=1)
+```
+
+# Combine plots
+```{r}
+vplot.s <- myvarplot(vpr2.s, snorcols)
+vplot.q <- myvarplot(vpr2.q, qnorcols)
+```
+
+```{r}
+bplot.s <- mybetaplot(beta.s)
+bplot.q <- mybetaplot(beta.q)
+```
+
+```{r}
+gplot.s <- mygammaplot(gamma.s)
+gplot.q <- mygammaplot(gamma.q)
+```
+
+```{r}
+fig5 <- vplot.s + bplot.s + gplot.s + 
+  vplot.q + bplot.q + gplot.q + 
+  plot_layout(nrow=2, ncol=3, widths = c(1,1,1), heights=c(1.7, 1), guides = 'collect') +
+  plot_annotation(tag_levels="A")
+
+fig5
+```
+
+```{r}
+ggsave(filename=here::here("figs", "fig5.svg"), plot=fig5, device="svg",
+                  units="cm", height=15, width=17.8)
+```
+
+# How much traits explain for Beta in total
+```{r}
+r2t <- map_dfr(models, vptraitformat)
+
+write_tsv(r2t, here::here("tables", "trait_variance.tsv"))
+```
+
+`VP$R2T$Beta` tells how much traits explain out of variation among species in their response to each covariate 
+`VP$R2T$Y` tells how much traits explain out of variation in species occurrences 
+
+How much variation do traits explain among the species in their responses to environmental covariates?
+
+The traits explain a maximum of 25% of variance in the evolution responses. This makes sense since the traits we've measured mostly concern ciliate defense.
+
+The traits explain only a substantial proportion of variation in species abundances.
+
+# PHYLOGENETIC SIGNAL
+```{r}
+summary(loadhmsccoda("qeq_ma_full_thin_1000_samples_250_chains_4.rds")$Rho)
+```
+
+```{r}
+summary(loadhmsccoda("sort_ma_full_thin_1000_samples_250_chains_4.rds")$Rho)
+```

@@ -43,7 +43,7 @@ done
 Run these steps on an HPC cluster
 
 1. [`amplicon_quality_control.sh`](sh/amplicon_quality_control.sh) -- Trim and filter reads
-2. [`amplicon_mapping.sh`](sh/amplicon_mapping.sh) -- map QC'ed reads to the database in 
+2. [`amplicon_mapping.sh`](sh/amplicon_mapping.sh) -- map QC'ed reads to the database in `data_raw/16S_amplicon/mapping.tar.gz`
 
 # Analysis steps
 
@@ -75,13 +75,21 @@ Go through these steps in order to reproduce the analysis in the paper.
 2. [`community_dissimilarity_plot.R`](r/community_dissimilarity_plot.R) -- Reproduces Fig. S1B from supplementary
 3. [`community_dissimilarity_regression.R`](r/community_dissimilarity_regression.R) -- Reproduces Table S5
 4. [`shannon_diversity.R`](r/shannon_diversity.R) -- Run divnet estimate of Shannon diversity and save result
-5. [`change_point_regression.R`](r/change_point_regression.R) -- Perform multiple change point regression of the shannon diversity estimate. Reproduces Fig. S2 from the main text
-6. []
-
-[`ordination.R`](r/ordination.R) --
+5. [`shannon_change_point_regression.R`](r/shannon_change_point_regression.R) -- Perform multiple change point regression of the shannon diversity estimate. Reproduces Fig. S2.
+6. [`shannon_sort_eq_regression_bayes.R`](r/shannon_sort_eq_regression_bayes.R) -- Performs regression using MCMC from Stan on the Shannon estimates in the two experimental phases. Reproduces Fig. S3 and Tables S6 and S7
+  a. [`shannon_sort_eq_regression_freq.R`](r/shannon_sort_eq_regression_freq.R) -- Performs frequentist regression. No Stan required
+7. [`ordination.R`](r/ordination.R) -- Ordination and jump lengths. Generate Fig. 3C and Table S8
+8. [`fig3.R`](r/fig3.R) -- Generate final Fig 3
 
 ## 5. Bacteria traits
+1. ['traits.R'](r/traits.R) -- Load and format trait data for use with JSDM models
 
 ## 6. Joint species distribution modeling
+1. JSDM_format_sort.R
+2. JSDM_format_qeq.R
+2. puhti_hmsc_mcmc.sh executes puhti_hmsc_mcmc.R
+3. puhti_hmsc_crossvaliation.sh executes puhti_hmsc_crossvaliation.R
+4. JSDM_convergence.R
+5. JSDM_inspect.R
 
 ## 7. Consumer feeding efficiency

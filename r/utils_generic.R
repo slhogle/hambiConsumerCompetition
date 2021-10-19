@@ -108,3 +108,7 @@ grouped_bbdml_quantiles95 = function (x, B = 1000, ...) {
   
   return(df) 
 }
+
+scale2 <- function(x, na.rm = FALSE) {
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+}
