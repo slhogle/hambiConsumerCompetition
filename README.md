@@ -1,10 +1,15 @@
-# "Effects of phenotypic variation on consumer coexistence and prey community structure"
+# Effects of phenotypic variation on consumer coexistence and prey community structure
 
 [Preprint available from bioRxiv](https://www.biorxiv.org/content/10.1101/2021.06.09.447767)
 
 [Full text available from Ecology Letters]()
 
 Supporting data and code is provided under the MIT License.
+
+# Clone the repository
+```{bash}
+git clone https://github.com/slhogle/hambiConsumerCompetition.git
+```
 
 # Directory structure
 
@@ -53,6 +58,19 @@ Platform: x86_64-pc-linux-gnu (64-bit)
 Running under: Pop!_OS 21.04
 ```
 
+Project dependencies are managed with [`pak`](https://pak.r-lib.org/) and [`renv`](https://rstudio.github.io/renv/index.html). This allows one to restore the
+correct package versions for this project to run with the system and R version
+listed above.
+
+To setup packages to the versions used in this analysis, simply run:
+
+```{r}
+renv::restore()
+```
+
+from the main project directory.
+
+
 Go through these steps in order to reproduce the analysis in the paper. 
 
 ## 1. Format data
@@ -63,7 +81,7 @@ Go through these steps in order to reproduce the analysis in the paper.
 2. [`correct_bias.R`](R/correct_bias.R) -- applying method from [this paper](https://elifesciences.org/articles/46923)
 3. [`normalize_counts.R`](R/normalize_counts.R) -- normalizing sequencing counts for later 
 
-## 3. Model consumeR/prey densities
+## 3. Model consumer/prey densities
 1. [`gam_ciliate_density.R`](R/gam_ciliate_density.R) -- fit GAM used in Table S2 and Fig 2
 2. [`gam_OD600_density.R`](R/gam_OD600_density.R) -- fit GAM used in Table S3 and Fig 2
 3. [`gam_nematode_density.R`](R/gam_nematode_density.R) -- fit GAM used in Table S4 and Fig 2
@@ -87,11 +105,11 @@ Go through these steps in order to reproduce the analysis in the paper.
 ## 6. Joint species distribution modeling
 1. [`JSDM_format_sort.R`](R/JSDM_format_sort.R) -- formats sorting phase models. Models need to be uploaded to cluster afterward
 2. [`JSDM_format_qeq.R`](R/JSDM_format_qeq.R) -- formats equilibrium phase models. Models need to be uploaded to cluster afterward
-2. [`puhti_hmsc_mcmc.sh`](R/puhti_hmsc_mcmc.sh) -- executes `puhti_hmsc_mcmc.R` and fits models using MCMC
-3. [`puhti_hmsc_crossvaliation.sh`](R/puhti_hmsc_crossvaliation.sh) executes `puhti_hmsc_crossvaliation.R` and performs 5-fold cross validation to determine predictive performance of the full models
+2. [`puhti_hmsc_mcmc.sh`](sh/puhti_hmsc_mcmc.sh) -- executes [`puhti_hmsc_mcmc.R`](R/puhti_hmsc_mcmc.R) and fits models using MCMC
+3. [`puhti_hmsc_crossvaliation.sh`](sh/puhti_hmsc_crossvaliation.sh) executes [`puhti_hmsc_crossvaliation.R`](R/puhti_hmsc_crossvaliation.R) and performs 5-fold cross validation to determine predictive performance of the full models
 4. [`JSDM_convergence.R`](R/JSDM_convergence.R) -- Various stats to demonstrate chains have converged
 5. [`JSDM_inspect.R`](R/JSDM_inspect.R) -- Produces Table S9 and S10 and main text Fig. 4
 
 ## 7. Consumer feeding efficiency
-[`fig5.R`](R/fig5.R) -- generates Figure 5 from main text
-[`consumer_feeding_stats.R`](R/consumer_feeding_stats.R) -- reproduces Table S11 and S12
+1. [`fig5.R`](R/fig5.R) -- generates Figure 5 from main text
+2. [`consumer_feeding_stats.R`](R/consumer_feeding_stats.R) -- reproduces Table S11 and S12
