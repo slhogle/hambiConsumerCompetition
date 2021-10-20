@@ -64,7 +64,8 @@ f3 <- formula(OD ~ treatment +
 
 # Comparing multiple probability distributions
 
-input <- dplyr::select(predator, -worm_per_ml, -ciliate_per_ml) %>%
+input <- dplyr::select(predator, -worm_per_ml, -worm_per_ml_imp, 
+                       -ciliate_per_ml, -ciliate_per_ml_imp) %>%
   drop_na()
 
 # Gaussian w/ identity link
