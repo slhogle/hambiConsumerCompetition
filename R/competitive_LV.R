@@ -4,10 +4,7 @@ library(gauseR)
 library(withr)
 
 # Load data ---------------------------------------------------------------
-predator <- read_tsv(here("data", "formatted_predator_prey_density.tsv"), col_types="ccccdddd") %>%
-  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
-  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
-         microcosmID=factor(microcosmID))
+predator <- readr::read_rds(here("data", "formatted_predator_prey_density.rds"))
 
 dat_ltv <- predator %>% filter(treatment == "HNPanc") %>%
   select(day, replicate, ciliate = ciliate_per_ml_imp, worm = worm_per_ml_imp) %>%

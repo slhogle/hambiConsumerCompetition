@@ -1,5 +1,5 @@
-source(here::here("r", "utils_generic.R"))
-source(here::here("r", "utils_community_composition.R"))
+source(here::here("R", "utils_generic.R"))
+source(here::here("R", "utils_community_composition.R"))
 
 # Format data -------------------------------------------------------------
 
@@ -70,9 +70,7 @@ p <- ggplot(dq1.f, aes(x=index)) +
 ggsave(here::here("figs", "figS1b.svg"), p, width=17.8, height=11.8, units="cm",
        device="svg")
 
-
-dq1.f %>%
+print(dq1.f %>%
   group_by(index) %>%
   summarize(m=mean(value),
-            sd=sd(value))
-
+            sd=sd(value)))

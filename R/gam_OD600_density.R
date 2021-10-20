@@ -9,10 +9,7 @@ library(withr)
 library(emmeans)
 
 # Load data ---------------------------------------------------------------
-predator <- read_rds(here("data", "formatted_predator_prey_density.rds")) %>%
-  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
-  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
-         microcosmID=factor(microcosmID))
+predator <- readr::read_rds(here("data", "formatted_predator_prey_density.rds"))
 
 predator %>%
   filter(!is.na(OD)) %>%
@@ -27,8 +24,6 @@ predator %>%
   theme_bw() +
   theme(panel.grid.major = element_blank(),
         panel.grid.minor = element_blank())
-
-
 
 # GAM formulas ------------------------------------------------------------
 

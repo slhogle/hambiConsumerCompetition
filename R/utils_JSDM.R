@@ -95,8 +95,7 @@ WAICfit <- function(myname, mythin){
 }
 
 cv5fit <- function(myname){
-
-  mymodel <- readr::read_rds(here::here("data", "JSDM_fit", myname))
+  mymodel <- loadhmsc(myname)
   mypreds <- readr::read_rds(here::here("data", "JSDM_assess_fit", myname))
   
   MF <- evaluateModelFit(hM=mymodel, predY=mypreds)
@@ -122,7 +121,6 @@ cv5fit <- function(myname){
 
 
 vpformat <- function(name) {
-  #m <- readr::read_rds(here::here("JSDM_fit", name))
   m  <- loadhmsc(name)
   vp <- computeVariancePartitioning(m)
   df <- data.frame(vp$vals) %>% as_tibble(rownames = "variable") %>%
@@ -136,7 +134,6 @@ vpformat <- function(name) {
 
 vptraitformat <- function(name) {
   m  <- loadhmsc(name)
-  #m <- readRDS(here::here("models_fit", name))
   vp <- computeVariancePartitioning(m)
   df <- data.frame(R2T_beta=vp$R2T$Beta) %>% as_tibble(rownames = "variable") %>%
     mutate(variable=factor(variable, levels=c("(Intercept)", "effort", "day",
@@ -150,7 +147,6 @@ vptraitformat <- function(name) {
 }
 
 betaformat <- function(name, level) {
-  #m <- readRDS(here::here("models_fit", name))
   m  <- loadhmsc(name)
   pb <- getPostEstimate(m, parName="Beta")
   
@@ -178,7 +174,6 @@ betaformat <- function(name, level) {
 
 
 gammaformat <- function(name, level) {
-  #m <- readRDS(here::here("models_fit", name))
   m  <- loadhmsc(name)
   pg <- getPostEstimate(m, parName="Gamma")
   
@@ -212,8 +207,7 @@ gammaformat <- function(name, level) {
 
 traitgradient <- function(name){
   m  <- loadhmsc(name)
-  #m <- readRDS(here::here("models_fit", name))
-  
+
   grad.wrm0 <- constructGradient(m, focalVariable = "cil", non.focalVariables = list("wrm"=list(3,0)))
   grad.wrm1 <- constructGradient(m, focalVariable = "cil", non.focalVariables = list("wrm"=list(3,1)))
   
@@ -274,8 +268,8 @@ mybetaplot <- function(d){
   ggplot(d) +
     geom_tile(aes(x=variable, y=species, fill=sign, alpha=abs(sign))) +
     labs(x="", y="", fill="") +
-    scale_fill_carto_c(palette = "Fall", guide=FALSE) + 
-    scale_alpha_continuous(range=c(0.35,1), guide=FALSE) + 
+    scale_fill_carto_c(palette = "Fall", guide = "none") + 
+    scale_alpha_continuous(range=c(0.35,1), guide = "none") + 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
           panel.border = element_blank(),
           axis.line.x = element_line(colour = "black"),
@@ -288,8 +282,8 @@ mygammaplot <- function(d) {
   ggplot(d) +
     geom_tile(aes(x=variable, y=trait, fill=sign, alpha=abs(sign))) +
     labs(x="", y="", fill="") +
-    scale_fill_carto_c(palette = "Fall", guide=FALSE) + 
-    scale_alpha_continuous(range=c(0.35,1), guide=FALSE) + 
+    scale_fill_carto_c(palette = "Fall", guide = "none") + 
+    scale_alpha_continuous(range=c(0.35,1), guide = "none") + 
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
           panel.border = element_blank(),
           axis.line.x = element_line(colour = "black"),

@@ -1,12 +1,9 @@
-library(tidyverse)
-library(here)
+predator <- readr::read_rds(here::here("data", "formatted_predator_prey_density.rds")) #%>%
+  # mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
+  # mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
+  #        microcosmID=factor(microcosmID))
 
-predator <- read_rds(here::here("data", "formatted_predator_prey_density.rds")) %>%
-  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
-  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
-         microcosmID=factor(microcosmID))
-
-counts <- read_rds(here::here("data", "normalized_corrected_species_counts.rds"))
+counts <- readr::read_rds(here::here("data", "normalized_corrected_species_counts.rds"))
 
 # This function implements equation (16) from Chromosomal barcoding of E. coli 
 # populations reveals lineage diversity dynamics at high resolution

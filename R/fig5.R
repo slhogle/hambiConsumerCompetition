@@ -1,20 +1,9 @@
-source(here::here("r", "utils_consumer_feeding.R"))
-source(here::here("r", "utils_generic.R"))
+source(here::here("R", "utils_consumer_feeding.R"))
+source(here::here("R", "utils_generic.R"))
 
 library(patchwork)
 
 # Fig 5 A -----------------------------------------------------------------
-
-df2 <- df1 %>%
-  group_by(replicate, treatment) %>%
-  mutate(pred_per_ml=case_when(!is.na(ciliate_per_ml) ~ ciliate_per_ml/max(ciliate_per_ml),
-                               is.na(ciliate_per_ml) ~ worm_per_ml/max(worm_per_ml),
-                               TRUE ~ NA_real_)) %>%
-  mutate(freq=ifelse(is.na(freq), 0.001, freq),
-         H=ifelse(is.na(H), 0.001, H)) %>%
-  mutate(prey_removed=H-freq) %>%
-  mutate(prey_consumed_pc=case_when(treatment=="N" ~ prey_removed/worm_per_ml,
-                                    TRUE ~ (prey_removed/ciliate_per_ml)*1)) 
 
 p5a <- ggplot(df2, aes(x=H, y=freq)) +
   geom_abline(slope=1, intercept=0, linetype="dashed") +

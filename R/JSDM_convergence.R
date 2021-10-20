@@ -1,5 +1,5 @@
-source(here::here("r", "utils_generic.R"))
-source(here::here("r", "utils_JSDM.R"))
+source(here::here("R", "utils_generic.R"))
+source(here::here("R", "utils_JSDM.R"))
 
 library(ape)
 library(Hmsc)

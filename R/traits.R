@@ -1,4 +1,4 @@
-source(here::here("r", "utils_generic.R"))
+source(here::here("R", "utils_generic.R"))
 
 library(here)
 library(tidyverse)
@@ -18,7 +18,6 @@ library(withr)
 # counts <- read_rds(here::here("data", "normalized_corrected_species_counts.rds"))
 
 traits <- read_tsv(here::here("data", "HAMBI-traits.tsv"))
-
 
 # Plot scaled traits ------------------------------------------------------
 
@@ -90,7 +89,7 @@ pload <- ggplot(load, aes(y=trait, x=PC, fill=value)) +
         panel.background = element_blank())
 
 ggsave(filename=here::here("figs", "traits_PCA_loadings.svg"), plot=pload, device="svg",
-       units="cm", height=14, width=12)
+       units="cm", height=12, width=17.8)
 
 pload
 

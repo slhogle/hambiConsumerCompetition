@@ -1,15 +1,25 @@
+library(here)
+library(withr)
+library(tidyverse)
+
+library(see)
+library(insight)
+library(bayestestR)
+library(performance)
+
 library(rstanarm)
 library(bayesplot)
 library(tidybayes)
-library(bayestestR)
-library(insight)
-library(see)
-library(performance)
-library(emmeans)
-library(betareg)
-library(withr)
 
-dq1.f <- read_rds( here::here("data", "community_dissimilarities.rds"))
+library(emmeans)
+
+
+# Read data ---------------------------------------------------------------
+
+dq1.f <- readr::read_rds( here::here("data", "community_dissimilarities.rds"))
+
+
+# Beta regression ---------------------------------------------------------
 
 # Beta regression from rstanarm
 with_seed(2344523, 
@@ -19,20 +29,9 @@ with_seed(2344523,
               iter = 4000,
               cores = 4))
 
-mdraws <- as.matrix(m)
-
-
-# posterior predictive check... A bit hacky for the mgcg betar family.
-
-# m1 <- m
-# class(m1) <- c(class(m1), "betareg")
-
-# ppc_dens_overlay(y = m1$y, yrep = posterior_predict(m1, draws = 200))
-
-
+# posterior summary
 describe_posterior(m, ci = 0.95, rope_ci = 0.95,
                    test = c("p_direction", "rope"))
-
 
 # Plot the model results. Nothing in 95% ROPE
 p1 <- m %>%
@@ -48,7 +47,6 @@ p1 <- m %>%
 
 p1
 
-
 # Examine emmeans contrasts
 
 m %>%
@@ -58,17 +56,3 @@ m %>%
   xtable::xtable() %>%
   print() %>%
   write_lines(here::here("tables", "table_S5.tex"))
-
-  # invlogit transform back to [0-1] interval
-  # mutate(.value=invlogit(.value),
-  #        .lower=invlogit(.lower),
-  #        .upper=invlogit(.upper)
-  # )
-
-# Pairwise contrasts (on log-odds scale)
-
-m %>%
-  emmeans( ~ index) %>%
-  contrast(method = "pairwise") %>%
-  gather_emmeans_draws() %>%
-  median_qi()

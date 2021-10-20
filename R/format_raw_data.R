@@ -40,10 +40,13 @@ od_d <- df %>%
   dplyr::select(sample, microcosmID, treatment, replicate, day, OD)
 
 df1 <- left_join(od_d, cil_d) %>%
-  left_join(., wrm_d) #%>%
+  left_join(., wrm_d) %>%
   # for setting NAs to 0
   #mutate(across(c(ciliate_count_raw, ciliate_per_ml, 
-  #                worm_count_raw, worm_per_ml), ~replace_na(.x, 0)))
+  #                worm_count_raw, worm_per_ml), ~replace_na(.x, 0))) %>%
+  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
+  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
+         microcosmID=factor(microcosmID))
 
 write_rds(df1, here::here("data", "formatted_predator_prey_density.rds"))
 

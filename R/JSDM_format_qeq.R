@@ -1,4 +1,4 @@
-source(here::here("r", "utils_generic.R"))
+source(here::here("R", "utils_generic.R"))
 
 library(here)
 library(tidyverse)

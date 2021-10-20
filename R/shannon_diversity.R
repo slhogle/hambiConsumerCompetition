@@ -1,5 +1,5 @@
-source(here::here("r", "utils_generic.R"))
-source(here::here("r", "utils_community_composition.R"))
+source(here::here("R", "utils_generic.R"))
+source(here::here("R", "utils_community_composition.R"))
 
 library(withr)
 library(phyloseq)

@@ -6,12 +6,36 @@
 
 Supporting data and code is provided under the MIT License.
 
-# Clone the repository
+# Setup
+
+## Clone the repository
 ```{bash}
 git clone https://github.com/slhogle/hambiConsumerCompetition.git
 ```
 
-# Directory structure
+## System info
+```
+R version 4.1.1 (2021-08-10)
+Platform: x86_64-pc-linux-gnu (64-bit)
+Running under: Pop!_OS 21.04
+JAGS: deb jags (4.3.0-3build1)
+STAN: 2.21.0
+```
+
+## Dependencies
+Project R dependencies are managed with [`pak`](https://pak.r-lib.org/) and [`renv`](https://rstudio.github.io/renv/index.html). This allows one to restore the
+correct package versions for this project to run with the system and R version
+listed above. You will need to also install JAGS. On Ubuntu you can do `sudo apt-get install jags`
+
+To setup packages to the versions used in this analysis, simply run:
+
+```{r}
+renv::restore()
+```
+
+from the main project directory. 
+
+## Directory structure
 
 1. `/sh` contains scripts from running analysis on the [puhti compute cluster](https://docs.csc.fi/computing/systems-puhti/)
 2. `/r` contains R scripts
@@ -52,26 +76,7 @@ Run these steps on an HPC cluster
 
 # Analysis steps
 
-```
-R version 4.1.1 (2021-08-10)
-Platform: x86_64-pc-linux-gnu (64-bit)
-Running under: Pop!_OS 21.04
-```
-
-Project dependencies are managed with [`pak`](https://pak.r-lib.org/) and [`renv`](https://rstudio.github.io/renv/index.html). This allows one to restore the
-correct package versions for this project to run with the system and R version
-listed above.
-
-To setup packages to the versions used in this analysis, simply run:
-
-```{r}
-renv::restore()
-```
-
-from the main project directory.
-
-
-Go through these steps in order to reproduce the analysis in the paper. 
+Go through these steps in order to reproduce the analysis in the paper. You can also run `Rscript R/runeverything.R` which will perform all steps in the analysis automatically.
 
 ## 1. Format data
 1. [`rpkm2tab.R`](R/rpkm2tab.R) -- format bbmap output to tables

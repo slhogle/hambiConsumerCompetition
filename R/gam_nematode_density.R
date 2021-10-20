@@ -9,10 +9,7 @@ library(withr)
 library(emmeans)
 
 # Load data ---------------------------------------------------------------
-predator <- read_rds(here("data", "formatted_predator_prey_density.rds")) %>%
-  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
-  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
-         microcosmID=factor(microcosmID)) %>%
+predator <- readr::read_rds(here("data", "formatted_predator_prey_density.rds")) %>%
   dplyr::select(-worm_per_ml) %>%
   dplyr::rename(worm_per_ml=worm_per_ml_imp)
 

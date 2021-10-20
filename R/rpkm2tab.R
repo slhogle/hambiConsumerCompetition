@@ -1,6 +1,6 @@
 library(here)
 library(tidyverse)
-source(here::here("r", "utils_generic.R"))
+source(here::here("R", "utils_generic.R"))
 
 untar(tarfile="data_raw/16S_amplicon/mapping.tar.gz", exdir="data_raw/16S_amplicon")
 untar(tarfile="data_raw/16S_amplicon/mapping/bbmap_rpkm.tar.gz", exdir="data_raw/16S_amplicon/mapping")

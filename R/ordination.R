@@ -1,11 +1,11 @@
-source(here::here("r", "utils_generic.R"))
-source(here::here("r", "utils_community_composition.R"))
+source(here::here("R", "utils_generic.R"))
+source(here::here("R", "utils_community_composition.R"))
 
+library(withr)
 library(patchwork)
-library(scales)
 library(ggforce)
 library(vegan)
-library(withr)
+
 library(rstanarm)
 library(bayestestR)
 library(modelbased)
@@ -23,98 +23,13 @@ a <- counts %>%
   column_to_rownames(var="sample") %>%
   data.frame()
 
-# Samples distances with Bray-curtis dissimilarity 
-withr::with_seed(12378, dist <- vegdist(a,  method = "bray"))      
+# nMDS ordination ---------------------------------------------------------
 
-# do ordination
-with_seed(123784, nmds_ord <- metaMDS(dist, k = 2, trymax = 100, trace = F, autotransform = FALSE))
+# Bray-curtis dissimilarity 
+withr::with_seed(12378, dist <- vegan::vegdist(a,  method = "bray"))      
 
-
-# Jump lengths ------------------------------------------------------------
-
-# see [here](https://www.sciencedirect.com/science/article/pii/S1369527418300092#bib0070)
-
-# Are the jumps through community space larger or smaller for a given treatment?
-
-
-# calculate distances by pythagorean theorem
-jumps <- nmds2plot %>%
-  arrange(treatment, replicate, day) %>%
-  group_by(microcosmID) %>%
-  mutate(axis1_lag = lag(axis_1),
-         axis2_lag = lag(axis_2)) %>%
-  mutate(d=sqrt((axis_1-axis1_lag)^2 + (axis_2-axis2_lag)^2)) %>%
-  ungroup()
-
-jumps %>%
-  group_by(treatment) %>%
-  summarize(l=mean(d, na.rm=T)) %>%
-  arrange(l)
-
-
-# what does it look like
-ggplot(jumps, aes(x=treatment, y=d, color=factor(day))) + 
-  geom_point()
-
-# perform regression
-withr::with_seed(34578, 
-                 m2stan <- stan_glm(
-                   d ~ treatment,
-                   data = jumps,
-                   family = Gamma(),
-                   iter = 4000,
-                   cores = 4
-                 ))
-
-# describe posterior
-# Table S8a
-describe_posterior(m2stan, test = c("pd", "rope"), ci = 0.95,
-                   rope_range = c(-0.1, 0.1), rope_ci=1) %>%
-  as_tibble() %>%
-  mutate(Median=round(Median, 2),
-         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
-         pd=pd*100,
-         ROPE_Percentage=ROPE_Percentage*100) %>%
-  select(Parameter, Median, CI, pd, ROPE_low, ROPE_Percentage) %>%
-  xtable::xtable(auto=TRUE) %>%
-  print() %>%
-  write_lines(here::here("tables", "table_S8a.tex"))
-
-
-estimate_means(m2stan, transform = "none")
-
-# Estimate contrasts
-# Table S8b
-estimate_contrasts(m2stan, 
-                   levels="treatment", 
-                   test=c("p_direction", "rope"), 
-                   ci = 0.95,
-                   rope_range = c(-0.1, 0.1),
-                   rope_ci = 1) %>%
-tibble() %>%
-  filter(pd > 0.97) %>%
-  mutate(Difference=round(Difference, 2),
-         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
-         pd=pd*100) %>%
-  mutate(ROPE_low=0.1,
-         ROPE_Percentage=ROPE_Percentage*100,
-         treatment=paste(Level1, Level2, sep=" - ")) %>%
-  select(treatment, Difference, CI, pd, ROPE_low, ROPE_Percentage) %>%
-  xtable::xtable(auto=TRUE) %>%
-  print() %>%
-  write_lines(here::here("tables", "table_S8b.tex"))
-
-# Default community with no predator has greatest jump lengths.
-# CHTV, N, and HNCHTV all have smaller jumps through community space than HPanc
-
-# Are the treatments differentially variable? 
-# Does one condition vary more than we expect by chance
-
-jumps1 <- jumps %>% select(d, treatment) %>% drop_na() %>% data.frame()
-with(jumps1, asymptotic_test(d, treatment))
-with(jumps1, mslr_test(nr = 1e4, d, treatment))
-
-# No evidence that they are differentially variable
+# ordination
+withr::with_seed(123784, nmds_ord <- vegan::metaMDS(dist, k = 2, trymax = 100, trace = F, autotransform = FALSE))
 
 # Plot --------------------------------------------------------------------
 
@@ -161,3 +76,76 @@ p2 <- ggplot() +
 # save subplot
 readr::write_rds(p2, here::here("data", "fig3c.rds"))
 
+# Jump lengths ------------------------------------------------------------
+
+# https://www.sciencedirect.com/science/article/pii/S1369527418300092#bib0070
+
+# Are the jumps through community space larger or smaller for a given treatment?
+
+# calculate distances by pythagorean theorem
+jumps <- nmds2plot %>%
+  arrange(treatment, replicate, day) %>%
+  group_by(microcosmID) %>%
+  mutate(axis1_lag = lag(axis_1),
+         axis2_lag = lag(axis_2)) %>%
+  mutate(d=sqrt((axis_1-axis1_lag)^2 + (axis_2-axis2_lag)^2)) %>%
+  ungroup()
+
+
+# Jump length regression --------------------------------------------------
+
+withr::with_seed(34578, 
+                 m2stan <- stan_glm(
+                   d ~ treatment,
+                   data = jumps,
+                   family = Gamma(),
+                   iter = 4000,
+                   cores = 4
+                 ))
+
+# describe posterior
+# Table S8a
+describe_posterior(m2stan, test = c("pd", "rope"), ci = 0.95,
+                   rope_range = c(-0.1, 0.1), rope_ci=1) %>%
+  as_tibble() %>%
+  mutate(Median=round(Median, 2),
+         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
+         pd=pd*100,
+         ROPE_Percentage=ROPE_Percentage*100) %>%
+  select(Parameter, Median, CI, pd, ROPE_low, ROPE_Percentage) %>%
+  xtable::xtable(auto=TRUE) %>%
+  print() %>%
+  write_lines(here::here("tables", "table_S8a.tex"))
+
+# Estimate contrasts
+# Table S8b
+estimate_contrasts(m2stan, 
+                   levels="treatment", 
+                   test=c("p_direction", "rope"), 
+                   ci = 0.95,
+                   rope_range = c(-0.1, 0.1),
+                   rope_ci = 1) %>%
+  tibble() %>%
+  filter(pd > 0.97) %>%
+  mutate(Difference=round(Difference, 2),
+         CI=paste0("[", round(CI_low, 2),", ",round(CI_high, 2),"]"),
+         pd=pd*100) %>%
+  mutate(ROPE_low=0.1,
+         ROPE_Percentage=ROPE_Percentage*100,
+         treatment=paste(Level1, Level2, sep=" - ")) %>%
+  select(treatment, Difference, CI, pd, ROPE_low, ROPE_Percentage) %>%
+  xtable::xtable(auto=TRUE) %>%
+  print() %>%
+  write_lines(here::here("tables", "table_S8b.tex"))
+
+# Default community with no predator has greatest jump lengths.
+# CHTV, N, and HNCHTV all have smaller jumps through community space than HPanc
+
+# Are the treatments differentially variable? 
+# Does one condition vary more than we expect by chance
+
+jumps1 <- jumps %>% select(d, treatment) %>% drop_na() %>% data.frame()
+print(with(jumps1, asymptotic_test(d, treatment)))
+print(with(jumps1, mslr_test(nr = 1e4, d, treatment)))
+
+# No evidence that they are differentially variable

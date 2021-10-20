@@ -5,8 +5,8 @@ library(Polychrome)
 library(withr)
 
 # Read data ---------------------------------------------------------------
-counts <- read_rds(here("data", "species_counts.rds"))
-expdesign <- read_tsv(here("data", "metadata.tsv"), col_types="ccddc")
+counts    <- readr::read_rds(here("data", "species_counts.rds"))
+expdesign <- readr::read_tsv(here("data", "metadata.tsv"), col_types="ccddc")
 
 # Prepare -----------------------------------------------------------------
 # We will use the metacal package for estimating bias and performing 

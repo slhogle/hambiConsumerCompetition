@@ -31,8 +31,9 @@ tax <- tibble::tribble(
 
 
 # Plotting ----------------------------------------------------------------
-
 library(rcartocolor)
+library(scales)
+
 my_colors <- carto_pal(6, "Vivid")
 names(my_colors) <- c("HPanc", "HPevo", "HN", "HNPanc", "HNPevo", "H")
 

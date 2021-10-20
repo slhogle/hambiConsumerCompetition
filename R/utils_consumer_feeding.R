@@ -4,9 +4,9 @@ library(scales)
 
 # Load data ---------------------------------------------------------------
 
-traits <- readr::read_tsv(here::here("data", "species_traits_11-11-2020.tsv"))
+traits   <- readr::read_tsv(here::here("data", "species_traits_11-11-2020.tsv"))
 predator <- readr::read_rds(here::here("data", "formatted_predator_prey_density.rds"))
-counts <- readr::read_rds(here::here("data", "normalized_corrected_species_counts.rds")) 
+counts   <- readr::read_rds(here::here("data", "normalized_corrected_species_counts.rds")) 
 
 # Prepare trait data ------------------------------------------------------
 
@@ -58,3 +58,14 @@ df1 <- df %>%
   filter(!(treatment=="HN" & day==21)) %>%
   mutate(treatment=factor(treatment, levels=c("HPanc", "HPevo", "HN"), 
                           labels=c("Canc", "Cevo", "N")))
+
+df2 <- df1 %>%
+  group_by(replicate, treatment) %>%
+  mutate(pred_per_ml=case_when(!is.na(ciliate_per_ml) ~ ciliate_per_ml/max(ciliate_per_ml),
+                               is.na(ciliate_per_ml) ~ worm_per_ml/max(worm_per_ml),
+                               TRUE ~ NA_real_)) %>%
+  mutate(freq=ifelse(is.na(freq), 0.001, freq),
+         H=ifelse(is.na(H), 0.001, H)) %>%
+  mutate(prey_removed=H-freq) %>%
+  mutate(prey_consumed_pc=case_when(treatment=="N" ~ prey_removed/worm_per_ml,
+                                    TRUE ~ (prey_removed/ciliate_per_ml)*1)) 

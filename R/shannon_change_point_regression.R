@@ -1,5 +1,5 @@
-source(here::here("r", "utils_generic.R"))
-source(here::here("r", "utils_community_composition.R"))
+source(here::here("R", "utils_generic.R"))
+source(here::here("R", "utils_community_composition.R"))
 
 library(mcp)
 library(rjags)
@@ -9,7 +9,6 @@ library(withr)
 
 # load divnet estimate
 div.sum <- read_rds(here::here("data", "shannon_summary.rds"))
-
 
 # Multiple change point regression ----------------------------------------
 
@@ -125,7 +124,7 @@ fit02$loo = loo(fit02)
 # Estimated Log Predictive Density (ELPD) for each model, and then 
 # compare them using loo::loo_compare().
 
-loo::loo_compare(fit00$loo, fit01$loo, fit02$loo)
+print(loo::loo_compare(fit00$loo, fit01$loo, fit02$loo))
 
 # So the first model (“model00”) is prefered since model01 has a smaller ELPD. 
 # We conclude that a non-zero slope in the second "quasi-equilibrium" 

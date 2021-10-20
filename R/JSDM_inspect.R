@@ -1,5 +1,5 @@
-source(here::here("r", "utils_generic.R"))
-source(here::here("r", "utils_JSDM.R"))
+source(here::here("R", "utils_generic.R"))
+source(here::here("R", "utils_JSDM.R"))
 
 library(ape)
 library(Hmsc)
@@ -13,8 +13,6 @@ models <-
     "sort_ma_full_thin_1000_samples_250_chains_4.rds",
     "sort_mp_full_thin_1000_samples_250_chains_4.rds"
   )
-
-
 
 # Variance partitioning ---------------------------------------------------
 
@@ -123,8 +121,6 @@ ptgr <- tgr %>% mutate(cil = case_when(cil == 0 ~ "None",
 ggsave(filename=here::here("figs", "JSDM_qeq_trait_gradient.svg"), plot=ptgr, device="svg",
        units="cm", height=8, width=25.8)
 
-ptgr
-
 # Combine plots
 vplot.s <- myvarplot(vpr2.s, snorcols)
 vplot.q <- myvarplot(vpr2.q, qnorcols)
@@ -140,12 +136,8 @@ fig4 <- vplot.s + bplot.s + gplot.s +
   plot_layout(nrow=2, ncol=3, widths = c(1,1,1), heights=c(1.7, 1), guides = 'collect') +
   plot_annotation(tag_levels="A")
 
-fig4
-
-ggsave(filename=here::here("figs", "fig4.svg"), plot=fig5, device="svg",
+ggsave(filename=here::here("figs", "fig4.svg"), plot=fig4, device="svg",
        units="cm", height=15, width=17.8)
-
-
 
 # Variance explained by traits --------------------------------------------
 
@@ -170,6 +162,8 @@ r2t %>%
 
 # Phylogenetic signal -----------------------------------------------------
 
-summary(loadhmsccoda("qeq_ma_full_thin_1000_samples_250_chains_4.rds")$Rho)
+print("Phylogenetic signal sorting phase")
+print(summary(loadhmsccoda("sort_ma_full_thin_1000_samples_250_chains_4.rds")$Rho))
 
-summary(loadhmsccoda("sort_ma_full_thin_1000_samples_250_chains_4.rds")$Rho)
+print("Phylogenetic signal equilibrium phase")
+print(summary(loadhmsccoda("qeq_ma_full_thin_1000_samples_250_chains_4.rds")$Rho))

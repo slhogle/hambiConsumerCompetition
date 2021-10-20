@@ -1,5 +1,5 @@
-source(here::here("r", "utils_consumer_feeding.R"))
-source(here::here("r", "utils_generic.R"))
+source(here::here("R", "utils_consumer_feeding.R"))
+source(here::here("R", "utils_generic.R"))
 
 library(patchwork)
 
@@ -20,7 +20,7 @@ library(withr)
 # model
 withr::with_seed(123784, 
     mfull <- stan_glm(freq ~ H*treatment,
-                  data = df3,
+                  data = df2,
                   iter = 4000,
                   cores = 4))
 
@@ -61,7 +61,7 @@ estimate_slopes(mfull,
          pd=pd*100) %>%
   mutate(ROPE_low=slopeROPE,
          ROPE_Percentage=ROPE_Percentage*100) %>%
-  select(treatment, Median, CI, pd, ROPE_low, ROPE_Percentage)# %>%
+  select(treatment, Median, CI, pd, ROPE_low, ROPE_Percentage) %>%
   xtable::xtable(auto=TRUE) %>%
   print() %>%
   write_lines(here::here("tables", "table_S11b.tex"))
@@ -72,7 +72,7 @@ describe_posterior(pairs(emtrends(mfull,
                                   "treatment", 
                                   var = "H",
                                   max.degree = 1,
-                                  data=df3,
+                                  data=df2,
                                   transform="response")),
                    ci = 0.95,
                    rope_range = c(-slopeROPE, slopeROPE),

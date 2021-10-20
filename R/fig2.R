@@ -6,13 +6,10 @@ library(mgcv)
 library(emmeans)
 library(ggeffects)
 library(withr)
-source(here::here("r", "utils_generic.R"))
+source(here::here("R", "utils_generic.R"))
 
 # Load data ---------------------------------------------------------------
-predator <- read_rds(here("data", "formatted_predator_prey_density.rds")) %>%
-  mutate(replicate=factor(replicate, levels=c("A", "B", "C", "D"))) %>%
-  mutate(treatment=factor(treatment, levels=c("H", "HN", "HPanc", "HPevo", "HNPanc", "HNPevo")),
-         microcosmID=factor(microcosmID))
+predator <- readr::read_rds(here("data", "formatted_predator_prey_density.rds"))
 
 cilGAM <- read_rds(here::here("data", "GAM_ciliate.rds"))
 wrmGAM <- read_rds(here::here("data", "GAM_nematode.rds"))
