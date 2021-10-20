@@ -307,8 +307,7 @@ compare_performance(m16, m17, rank = TRUE)
 
 test_performance(m16, m17)
 
-# So including random effects term is better.
-# Proceed with formula f1 using the negative binomial distribution with log-link.
+# Proceed with formula f2 using the negative binomial distribution with log-link.
 
 # Diagnostics -------------------------------------------------------------
 
@@ -318,20 +317,20 @@ test_performance(m16, m17)
 # explained by a further smooth of time.
 
 # classic gam.check from mgcv
-gam.check(m16)
+gam.check(m17)
 
 # visualize smooths using gratia
-draw(m16)
+draw(m17)
 
 # visualize diagnostics using gratia
-appraise(m16)
+appraise(m17)
 
 # Supplementary table S4 --------------------------------------------------
-gamtabs(m16, caption='Summary of m1lnb', type = "latex") %>%
+gamtabs(m17, caption='Summary of m1lnb', type = "latex") %>%
   write_lines(here::here("tables", "table_S4a.tex"))
 
 # emmeans model contrasts
-emmeans(m16, ~ treatment, data=input) %>%
+emmeans(m17, ~ treatment, data=input) %>%
   pairs(type = "response", adjust = "bonf") %>%
   xtable::xtable(type = "response") %>%
   print() %>%
