@@ -2,7 +2,7 @@
 
 [Preprint available from bioRxiv](https://www.biorxiv.org/content/10.1101/2021.06.09.447767)
 
-[Full text available from Ecology Letters]()
+[Full text available from Ecology Letters](https://doi.org/10.1111/ele.13924)
 
 Supporting data and code is provided under the MIT License.
 
